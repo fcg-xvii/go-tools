@@ -35,7 +35,7 @@ func SendEmail(subject, message string, receivers []string, userName, userPasswo
 		"Subject: " + mailEncodeHeader(subject) + "\r\n" +
 		"Content-Type: text/plain; charset=utf-8\r\n" +
 		"\r\n" + message + "\r\n")
-	return smtp.SendMail(host+":587", auth, userName, receivers, msg)
+	return smtp.SendMail(host, auth, userName, receivers, msg)
 }
 
 // send email with text/html mime type
