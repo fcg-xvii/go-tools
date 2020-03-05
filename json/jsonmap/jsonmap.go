@@ -18,6 +18,11 @@ func (s JSONMap) Bool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
+func (s JSONMap) KeyExists(key string) bool {
+	_, check := s[key]
+	return check
+}
+
 // Getter of int64 value
 func (s JSONMap) Int(key string, defaultVal int64) int64 {
 	if iface, check := s[key]; check {
