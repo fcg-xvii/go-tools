@@ -23,6 +23,15 @@ func (s JSONMap) KeyExists(key string) bool {
 	return check
 }
 
+func (s JSONMap) KeysExists(keys []string) string {
+	for _, key := range keys {
+		if _, check := s[key]; !check {
+			return key
+		}
+	}
+	return ""
+}
+
 // Getter of int64 value
 func (s JSONMap) Int(key string, defaultVal int64) int64 {
 	if iface, check := s[key]; check {
