@@ -2,6 +2,7 @@ package emailer
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/smtp"
 	"strings"
 	"time"
@@ -27,7 +28,7 @@ func mailJoinReceivers(receivers []string) string {
 }
 
 // send email with text/plain mime type
-func SendEmail(subject, message string, receivers []string, userName, userPassword, host, identity string) (err error) {
+func SendEmail(subject, message string, receivers []string, userName, userPassword, host, identity string, port int16) (err error) {
 	auth := smtp.PlainAuth(identity, userName, userPassword, host)
 	msg := []byte("To: " + mailJoinReceivers(receivers) + "\r\n" +
 		"Date:" + time.Now().Format("Mon 2 Jan 2006 15:04:05 -0700") + "\r\n" +
@@ -35,11 +36,11 @@ func SendEmail(subject, message string, receivers []string, userName, userPasswo
 		"Subject: " + mailEncodeHeader(subject) + "\r\n" +
 		"Content-Type: text/plain; charset=utf-8\r\n" +
 		"\r\n" + message + "\r\n")
-	return smtp.SendMail(host, auth, userName, receivers, msg)
+	return smtp.SendMail(fmt.Sprintf("%v:%v", host, port), auth, userName, receivers, msg)
 }
 
 // send email with text/html mime type
-func SendEmailHTML(subject, message string, receivers []string, userName, userPassword, host, identity string) (err error) {
+func SendEmailHTML(subject, message string, receivers []string, userName, userPassword, host, identity string, port int16) (err error) {
 	auth := smtp.PlainAuth(identity, userName, userPassword, host)
 	msg := []byte("To: " + mailJoinReceivers(receivers) + "\r\n" +
 		"Date:" + time.Now().Format("Mon 2 Jan 2006 15:04:05 -0700") + "\r\n" +
@@ -47,5 +48,5 @@ func SendEmailHTML(subject, message string, receivers []string, userName, userPa
 		"Subject: " + mailEncodeHeader(subject) + "\r\n" +
 		"Content-Type: text/html; charset=utf-8\r\n" +
 		"\r\n" + message + "\r\n")
-	return smtp.SendMail(host, auth, userName, receivers, msg)
+	return smtp.SendMail(fmt.Sprintf("%v:%v", host, port), auth, userName, receivers, msg)
 }
