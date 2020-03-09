@@ -47,5 +47,5 @@ func SendEmailHTML(subject, message string, receivers []string, userName, userPa
 		"Subject: " + mailEncodeHeader(subject) + "\r\n" +
 		"Content-Type: text/html; charset=utf-8\r\n" +
 		"\r\n" + message + "\r\n")
-	return smtp.SendMail(host+":587", auth, userName, receivers, msg)
+	return smtp.SendMail(host, auth, userName, receivers, msg)
 }
