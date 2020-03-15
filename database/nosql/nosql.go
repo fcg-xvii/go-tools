@@ -9,7 +9,7 @@ import (
 
 // NoSQL object
 type NoSQL struct {
-	openMethod func() (sql.Tx, error)
+	openMethod func() (*sql.Tx, error)
 }
 
 // Query execute request to database with command and paramerers map
@@ -21,4 +21,7 @@ func (_self *NoSQL) Query(command string, data interface{}) (res interface{}, er
 	}
 	// open tx
 	var tx *sql.Tx
+	if tx, err = _self.openMethod(); err != nil {
+		return
+	}
 }
