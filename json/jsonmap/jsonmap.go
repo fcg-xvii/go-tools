@@ -96,6 +96,16 @@ func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
 	return defaultVal
 }
 
+func (s JSONMap) ValueJSON(key string, defaultVal []byte) (res []byte) {
+	res = defaultVal
+	if s.KeyExists(key) {
+		if r, err := json.Marshal(s[key]); err == nil {
+			res = r
+		}
+	}
+	return
+}
+
 func (s JSONMap) String(key, defaultVal string) string {
 	if iface, check := s[key]; check {
 		return fmt.Sprint(iface)
