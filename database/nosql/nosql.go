@@ -21,9 +21,9 @@ func New(openMethod OpenTXMethod) *NoSQL {
 	return &NoSQL{openMethod}
 }
 
-// Query execute request to database with command and data interface. It called function command(data).
+// Query execute request to database with (function(json) json) interface.
 // Function should return json value
-func (_self *NoSQL) Query(command string, data interface{}) (res interface{}, err error) {
+func (_self *NoSQL) Query(function string, data interface{}) (res interface{}, err error) {
 	// convert data to raw json
 	var raw []byte
 	if raw, err = json.Marshal(data); err != nil {
@@ -34,7 +34,7 @@ func (_self *NoSQL) Query(command string, data interface{}) (res interface{}, er
 	if tx, err = _self.openMethod(); err == nil {
 		// execute query and scan result
 		var rRaw []byte
-		row := tx.QueryRow(fmt.Sprintf("select * from %v($1)", command), raw)
+		row := tx.QueryRow(fmt.Sprintf("select * from %v($1)", function), raw)
 		if err = row.Scan(&rRaw); err != nil {
 			tx.Rollback()
 			return
