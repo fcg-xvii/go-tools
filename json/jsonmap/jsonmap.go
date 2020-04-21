@@ -1,3 +1,4 @@
+// Package jsonmap for quickly get typed value from map[string]interface{} object
 package jsonmap
 
 import (
@@ -7,10 +8,10 @@ import (
 	"strconv"
 )
 
-// JSONMap
+// JSONMap type
 type JSONMap map[string]interface{}
 
-// Getter of bool value
+// Bool returns bool value by key
 func (s JSONMap) Bool(key string, defaultVal bool) bool {
 	if res, check := s[key].(bool); check {
 		return res
@@ -18,11 +19,15 @@ func (s JSONMap) Bool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
+// KeyExists check value exists by key
 func (s JSONMap) KeyExists(key string) bool {
 	_, check := s[key]
 	return check
 }
 
+// KeysExists check values exists by keys list.
+// Returns the first blank key found.
+// If all keys are defined, an empty string will be returned
 func (s JSONMap) KeysExists(keys []string) string {
 	for _, key := range keys {
 		if _, check := s[key]; !check {
@@ -32,7 +37,8 @@ func (s JSONMap) KeysExists(keys []string) string {
 	return ""
 }
 
-// Getter of int64 value
+// Int returns int64 value by key.
+// If key isn't defined will be returned defaultVal arg value
 func (s JSONMap) Int(key string, defaultVal int64) int64 {
 	if iface, check := s[key]; check {
 		rVal := reflect.ValueOf(iface)
@@ -46,7 +52,8 @@ func (s JSONMap) Int(key string, defaultVal int64) int64 {
 	return defaultVal
 }
 
-// Getter of value with attempt to convert to defaultVal type. If defaultVal is invalid (null) then will be return found value with each type
+// Value returns interface object with attempt to convert to defaultVal type.
+// If key isn't defined will be returned defaultVal arg value
 func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
 
 	// check value exists by key
@@ -96,6 +103,8 @@ func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
 	return defaultVal
 }
 
+// ValueJSON returns json source object by key
+// If key isn't defined will be returned defaultVal arg value
 func (s JSONMap) ValueJSON(key string, defaultVal []byte) (res []byte) {
 	res = defaultVal
 	if s.KeyExists(key) {
@@ -106,6 +115,8 @@ func (s JSONMap) ValueJSON(key string, defaultVal []byte) (res []byte) {
 	return
 }
 
+// String returns string value by key
+// If key isn't defined will be returned defaultVal arg value
 func (s JSONMap) String(key, defaultVal string) string {
 	if iface, check := s[key]; check {
 		return fmt.Sprint(iface)
@@ -113,26 +124,36 @@ func (s JSONMap) String(key, defaultVal string) string {
 	return defaultVal
 }
 
-func (s JSONMap) StringArray(key string) (res []string) {
+// StringSlice returns string slice by key
+// If key isn't defined will be returned defaultVal arg value
+func (s JSONMap) StringSlice(key string, defaultVal []string) (res []string) {
 	if arr, check := s[key].([]interface{}); check {
 		res = make([]string, len(arr))
 		for i, v := range arr {
 			res[i] = fmt.Sprint(v)
 		}
+	} else {
+		res = defaultVal
 	}
 	return
 }
 
-func (s JSONMap) JSONMap(key string) (res JSONMap) {
+// JSONMap returns JSONMap object by key
+// If key isn't defined or have other type will be returned defaultVal arg value
+func (s JSONMap) JSONMap(key string, defaultVal JSONMap) (res JSONMap) {
 	if m, check := s[key].(map[string]interface{}); check {
 		res = JSONMap(m)
+	} else {
+		res = defaultVal
 	}
 	return
 }
 
+// JSON Return JSON source of the self object
 func (s JSONMap) JSON() (res []byte) {
 	res, _ = json.Marshal(s)
 	return
 }
 
+// ToMap returns map[string]interface{} of the self object
 func (s JSONMap) ToMap() map[string]interface{} { return map[string]interface{}(s) }
