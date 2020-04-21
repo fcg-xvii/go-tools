@@ -64,37 +64,36 @@ func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
 		if !dVal.IsValid() {
 			// invalid, return arrived interface
 			return iface
-		} else {
-			// defaultVal is valid, attempt to convert found value to defaultVal type
-			lVal := reflect.ValueOf(iface)
+		}
+		// defaultVal is valid, attempt to convert found value to defaultVal type
+		lVal := reflect.ValueOf(iface)
 
-			switch {
-			case !lVal.IsValid():
-				return defaultVal // invalid found value, return defaultVal
-			case lVal.Kind() == dVal.Kind():
-				return iface // types of found value and defaultVal is match. return found value
-			case lVal.Type().ConvertibleTo(dVal.Type()):
-				return lVal.Convert(dVal.Type()).Interface() // found value type can be converted to defaultVal type. return converted found value
-			default:
-				{
-					// found value type can't be converted to defaultVal type. If found value is string, attempt to convert to number value
-					if lVal.Kind() == reflect.String {
-						switch dVal.Kind() {
-						case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-							if val, err := strconv.Atoi(lVal.String()); err != nil {
-								return defaultVal
-							} else {
-								lVal = reflect.ValueOf(val)
-								return lVal.Convert(dVal.Type())
-							}
-						case reflect.Float32, reflect.Float64:
-							if val, err := strconv.ParseFloat(lVal.String(), 64); err != nil {
-								return defaultVal
-							} else {
-								lVal = reflect.ValueOf(val)
-								return lVal.Convert(dVal.Type())
-							}
+		switch {
+		case !lVal.IsValid():
+			return defaultVal // invalid found value, return defaultVal
+		case lVal.Kind() == dVal.Kind():
+			return iface // types of found value and defaultVal is match. return found value
+		case lVal.Type().ConvertibleTo(dVal.Type()):
+			return lVal.Convert(dVal.Type()).Interface() // found value type can be converted to defaultVal type. return converted found value
+		default:
+			{
+				// found value type can't be converted to defaultVal type. If found value is string, attempt to convert to number value
+				if lVal.Kind() == reflect.String {
+					switch dVal.Kind() {
+					case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+						val, err := strconv.Atoi(lVal.String())
+						if err != nil {
+							return defaultVal
 						}
+						lVal = reflect.ValueOf(val)
+						return lVal.Convert(dVal.Type())
+					case reflect.Float32, reflect.Float64:
+						val, err := strconv.ParseFloat(lVal.String(), 64)
+						if err != nil {
+							return defaultVal
+						}
+						lVal = reflect.ValueOf(val)
+						return lVal.Convert(dVal.Type())
 					}
 				}
 			}
