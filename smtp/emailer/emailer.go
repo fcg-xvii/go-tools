@@ -1,3 +1,4 @@
+// Package emailer for send email messages text or html formats
 package emailer
 
 import (
@@ -27,7 +28,7 @@ func mailJoinReceivers(receivers []string) string {
 	return strings.Join(arr, ",")
 }
 
-// send email with text/plain mime type
+// SendEmail send email message with text/plain mime type
 func SendEmail(subject, message string, receivers []string, userName, userPassword, host, identity string, port int16) (err error) {
 	auth := smtp.PlainAuth(identity, userName, userPassword, host)
 	msg := []byte("To: " + mailJoinReceivers(receivers) + "\r\n" +
@@ -39,7 +40,7 @@ func SendEmail(subject, message string, receivers []string, userName, userPasswo
 	return smtp.SendMail(fmt.Sprintf("%v:%v", host, port), auth, userName, receivers, msg)
 }
 
-// send email with text/html mime type
+// SendEmailHTML send email message with text/html mime type
 func SendEmailHTML(subject, message string, receivers []string, userName, userPassword, host, identity string, port int16) (err error) {
 	auth := smtp.PlainAuth(identity, userName, userPassword, host)
 	msg := []byte("To: " + mailJoinReceivers(receivers) + "\r\n" +
