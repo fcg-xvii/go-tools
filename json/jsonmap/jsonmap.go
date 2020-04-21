@@ -11,6 +11,16 @@ import (
 // JSONMap type
 type JSONMap map[string]interface{}
 
+// New init JSONMap object
+func New() JSONMap {
+	return make(JSONMap)
+}
+
+// FromMap convert map[string]interface{} to JSONMap object
+func FromMap(m map[string]interface{}) JSONMap {
+	return JSONMap(m)
+}
+
 // Bool returns bool value by key
 func (s JSONMap) Bool(key string, defaultVal bool) bool {
 	if res, check := s[key].(bool); check {
