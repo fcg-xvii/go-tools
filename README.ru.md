@@ -11,8 +11,8 @@
 # go-tools
 > Библиотека инструментов для разработки приложений на golang
 
-## License
+## Лицензия
 
-The MIT License (MIT), see [LICENSE](LICENSE).
+The MIT License (MIT), подробнее [LICENSE](LICENSE).
 
-Copyright (c) 2020 Vladimir V Maksimov <flint@77i.su>
+Copyright (c) 2020 Владимир Максимов <flint@77i.su>
