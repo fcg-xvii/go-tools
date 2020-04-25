@@ -23,7 +23,7 @@ func New(openMethod OpenTXMethod) *NoSQL {
 
 // Query execute request to database with (function(json) json) interface.
 // Function should return json value
-func (_self *NoSQL) Query(function string, data interface{}) (res interface{}, err error) {
+func (_self *NoSQL) Call(function string, data interface{}) (res interface{}, err error) {
 	// convert data to raw json
 	var raw []byte
 	if raw, err = json.Marshal(data); err != nil {
