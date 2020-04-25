@@ -10,3 +10,9 @@
 
 # go-tools
 
+
+## License
+
+The MIT License (MIT), see [LICENSE](LICENSE).
+
+Copyright (c) 2020 Vladimir V Maksimov <flint@77i.su>
