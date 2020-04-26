@@ -1,10 +1,10 @@
 package ami
 
 import (
-	"io/ioutil"
 	"log"
 	"net"
 	"runtime"
+	"time"
 )
 
 func Open(host, login, password string) (cl *Client) {
@@ -50,6 +50,7 @@ func (s *client) start() (err error) {
 	if s.conn, err = net.Dial("tcp", s.host); err != nil {
 		return
 	}
+	s.receive()
 	s.send(Action{
 		"Action":   "Login",
 		"Username": s.login,
@@ -69,10 +70,28 @@ func (s *client) send(action Action) {
 	s.receive()
 }
 
-func (s *client) receive() {
+func (s *client) receiveGreetings() (err error) {
+	_, err = s.receive()
+	return
+}
+
+func (s *client) receiveResponse()
+
+func (s *client) receive() (res []byte, err error) {
 	log.Println("RECEIVE")
-	src, err := ioutil.ReadAll(s.conn)
-	log.Println(src, err)
+	count, buf := 0, make([]byte, 1024)
+	for {
+		s.conn.SetReadDeadline(time.Now().Add(time.Millisecond * 50))
+		if count, err = s.conn.Read(buf); err != nil {
+			if e, ok := err.(interface{ Timeout() bool }); ok && e.Timeout() {
+				log.Println("RECEIVED", string(res))
+				err = nil
+				return
+			}
+		} else {
+			res = append(res, buf[:count]...)
+		}
+	}
 }
 
 // exec start main goroutine for exec request to asterisk ami
