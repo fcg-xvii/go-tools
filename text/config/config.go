@@ -7,6 +7,30 @@ import (
 	"strings"
 )
 
+// creates map by parts and keys slices
+func partsToMap(parts []string, keys []string) map[string]string {
+	res := make(map[string]string)
+	for i, key := range keys {
+		if i < len(parts) {
+			res[key] = parts[i]
+		} else {
+			res[key] = ""
+		}
+	}
+	return res
+}
+
+// write string values of parts slice to pointers string slice
+func partsToVals(parts []string, ptrs []*string) {
+	for i, ptr := range ptrs {
+		if i < len(parts) {
+			*ptr = parts[i]
+		} else {
+			*ptr = ""
+		}
+	}
+}
+
 // SplitFile read data from file and returns a slice of lines from a read stream and split by splitter argument
 func SplitFile(fileName string, splitter string) (res []string, err error) {
 	var f *os.File
@@ -28,29 +52,7 @@ func Split(r io.Reader, splitter string) (res []string, err error) {
 	return
 }
 
-func partsToMap(parts []string, keys []string) map[string]string {
-	res := make(map[string]string)
-	for i, key := range keys {
-		if i < len(parts) {
-			res[key] = parts[i]
-		} else {
-			res[key] = ""
-		}
-	}
-	return res
-}
-
-func partsToVals(parts []string, ptrs []*string) {
-	for i, ptr := range ptrs {
-		if i < len(parts) {
-			*ptr = parts[i]
-		} else {
-			*ptr = ""
-		}
-	}
-}
-
-//
+// SplitToMap returns a map from a read stream, split by splitter argument and create map of keys
 func SplitToMap(r io.Reader, splitter string, keys ...string) (res map[string]string, err error) {
 	var parts []string
 	if parts, err = Split(r, splitter); err != nil {
@@ -60,7 +62,7 @@ func SplitToMap(r io.Reader, splitter string, keys ...string) (res map[string]st
 	return
 }
 
-//
+// SplitFile read data from file and returns a map from a read stream, split by splitter argument and create map of keys
 func SplitFileToMap(fileName string, splitter string, keys ...string) (res map[string]string, err error) {
 	var parts []string
 	if parts, err = SplitFile(fileName, splitter); err != nil {
@@ -70,6 +72,7 @@ func SplitFileToMap(fileName string, splitter string, keys ...string) (res map[s
 	return
 }
 
+// SplitToVars read data from stream, split by splitter arg and setup values to string pointers
 func SplitToVals(r io.Reader, splitter string, ptrs ...*string) (err error) {
 	var parts []string
 	if parts, err = Split(r, splitter); err != nil {
@@ -79,6 +82,7 @@ func SplitToVals(r io.Reader, splitter string, ptrs ...*string) (err error) {
 	return
 }
 
+// SplitFileToVars read data from file, split by splitter arg and setup values to string pointers
 func SplitFileToVals(fileName string, splitter string, ptrs ...*string) (err error) {
 	var parts []string
 	if parts, err = SplitFile(fileName, splitter); err != nil {
