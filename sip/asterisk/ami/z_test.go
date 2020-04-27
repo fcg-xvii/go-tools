@@ -22,6 +22,7 @@ func TestClient(t *testing.T) {
 	log.Println(host, login, password)
 
 	cl := Open(host, login, password, nil)
+	log.Println(cl.start())
 
 	/*resp, err := cl.Request(Action{
 		"Action":  "Originate",
