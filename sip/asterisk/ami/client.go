@@ -66,6 +66,7 @@ func (s *client) start() (err error) {
 	}
 
 	log.Println("GREETINGS ACCEPTED", string(greetings))
+
 	/*
 		// connection accepted, send auth data
 		response, err := s.sendAction(Action{
