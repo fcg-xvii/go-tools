@@ -22,7 +22,21 @@ func TestClient(t *testing.T) {
 	log.Println(host, login, password)
 
 	cl := Open(host, login, password, nil)
-	log.Println(cl.start())
+
+	req := initRequest(
+		"Originate",
+		ActionData{
+			"Channel": "SIP/777",
+			"Async":   "yes",
+		},
+		make(chan Response),
+	)
+
+	cl.start(req)
+
+	resp := <-req.chanResponse
+
+	log.Println("RESP", resp)
 
 	/*resp, err := cl.Request(Action{
 		"Action":  "Originate",
