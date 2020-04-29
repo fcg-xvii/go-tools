@@ -21,7 +21,9 @@ func init() {
 func TestClient(t *testing.T) {
 	log.Println(host, login, password)
 
-	cl := Open(host, login, password, nil)
+	cl := Open(host, login, password, func(state State, err error) {
+		log.Println("STATE_CHANGED", state, err)
+	})
 
 	req := initRequest(
 		"Originate",
@@ -29,10 +31,10 @@ func TestClient(t *testing.T) {
 			"Channel": "SIP/777",
 			"Async":   "yes",
 		},
-		make(chan Response),
+		make(chan Response, 1),
 	)
 
-	cl.start(req)
+	cl.Start()
 
 	resp := <-req.chanResponse
 

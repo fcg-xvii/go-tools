@@ -1,23 +1,35 @@
 package ami
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"runtime"
 )
 
-func Open(host, login, password string, eventListener chan Event) (cl *Client) {
+type State byte
+
+const (
+	StateStopped State = iota
+	StateConnection
+	StateConnected
+	StateAuth
+	StateAvailable
+	StateBusy
+)
+
+func Open(host, login, password string, stateChanged func(State, error)) (cl *Client) {
 	cl = &Client{
 		&client{
-			host:     host,
-			login:    login,
-			password: password,
-			done:     make(chan struct{}),
-			request:  make(chan Request),
-			//response:       make(chan interface{}),
-			event:          make(chan Event),
-			eventOtherSide: eventListener,
+			host:         host,
+			login:        login,
+			password:     password,
+			stateChanged: stateChanged,
+			state:        StateStopped,
+			request:      make(chan Request),
+			response:     make(chan Response),
+			event:        make(chan Event),
 		},
 	}
 	runtime.SetFinalizer(cl, destroyClient)
@@ -30,55 +42,62 @@ type Client struct {
 }
 
 type client struct {
-	host           string
-	login          string
-	password       string
-	conn           net.Conn
-	done           chan struct{}
-	request        chan Request
-	response       chan interface{}
-	event          chan Event
-	eventOtherSide chan Event
-	busy           bool
-	currentRequest Request
+	host         string
+	login        string
+	password     string
+	conn         net.Conn
+	request      chan Request
+	response     chan Response
+	event        chan Event
+	stateChanged func(State, error)
+	state        State
 }
 
-// exist close connection if opened
-func (s *client) disconnect() {
-	if s.conn != nil {
-		s.conn.Close()
-		s.conn = nil
+func (s *client) setState(state State, err error) {
+	s.state = state
+	if s.stateChanged != nil {
+		s.stateChanged(state, err)
 	}
 }
 
 // start open connection to asterisk ami server
-func (s *client) start(request Request) {
+func (s *client) Start() {
 	var err error
+
+	// check state. StateStopped needed
+	if s.state != StateStopped {
+		err = errors.New("AMI start error: client already started")
+		s.stateChanged(s.state, err)
+		return
+	}
+
+	defer func() {
+		s.setState(StateStopped, err)
+	}()
+
+	s.setState(StateConnection, nil)
 
 	// connection and read ami greetings message
 	if s.conn, err = net.Dial("tcp", s.host); err != nil {
 		err = fmt.Errorf("AMI connection socket connection error: %v", err.Error())
-		request.chanResponse <- initResponseError(err)
-		s.conn = nil
 		return
 	}
+	s.setState(StateConnected, nil)
 
 	// socket connected. receive greetings text
-	var greetings []byte
-	if greetings, err = s.receiveSingle(); err != nil {
+	if _, err = s.receiveSingle(); err != nil {
 		err = fmt.Errorf("AMI greetings receive error: %v", err.Error())
-		request.chanResponse <- initResponseError(err)
-		s.conn = nil
 		return
 	}
-	log.Println("GREETINGS ACCEPTED", string(greetings))
 
 	// greetings received, make attempt to auth
 
 	// start receive data loop
-	go s.receiveLoop()
+	/*go s.receiveLoop(func(socketError error) {
+		err = socketError
+	})*/
 
-	req := initRequest(
+	auth := initRequest(
 		"Login",
 		ActionData{
 			"UserName": s.login,
@@ -87,66 +106,106 @@ func (s *client) start(request Request) {
 		make(chan Response),
 	)
 
-	s.sendRequest(req)
+	actionCallback := func(action ActionData) {
+		log.Println("ACTION", action)
+		if action.isResponse() {
+			log.Println("ACT")
+			if action["Response"] == "Success" {
+				s.setState(StateAuth, nil)
+			} else {
+				s.conn.Close()
+				err = fmt.Errorf("AMI authentication error: %v", action["Message"])
+				return
+			}
+		} else {
+			if action["Event"] == "FullyBooted" {
+				if s.state == StateAuth {
+					s.setState(StateAvailable, nil)
+				}
+			}
+		}
+	}
 
-	/*
-		// connection accepted, send auth data
-		response, err := s.sendAction(Action{
-			"Action":   "Login",
-			"Username": s.login,
-			"Secret":   s.password,
-		})
-		log.Println(response, err)
-	*/
+	if err = s.sendSingleRequest(auth, actionCallback); err != nil {
+		err = fmt.Errorf("AMI greetings receive error: %v", err.Error())
+		return
+	}
+
+loop:
+	for {
+		select {
+		case request := <-s.request:
+			{
+
+			}
+		case event := <-s.event:
+			{
+
+			}
+		}
+	}
 	return
 }
 
 func (s *client) receiveSingle() (data []byte, err error) {
 	count, buf := 0, make([]byte, 1024)
-	if count, err = s.conn.Read(buf); err != nil {
-		if e, ok := err.(interface{ Timeout() bool }); ok && e.Timeout() {
-			log.Println("RECEIVED", string(data))
-			err = nil
-		} else {
-			s.conn = nil
-		}
-		return
-	} else {
-		data = append(data, buf[:count]...)
+	if count, err = s.conn.Read(buf); err == nil {
+		data = buf[:count]
 	}
 	return
 }
 
-func (s client) sendRequest(request Request) {
-	s.currentRequest = request
-	if _, err := s.conn.Write(request.raw()); err != nil {
-		err = fmt.Errorf("AMI socket send data error: %v", err.Error())
-		request.chanResponse <- initResponseError(err)
+func (s *client) sendSingleRequest(request Request, acceptCallback func(ActionData)) (err error) {
+	// send action
+	if err = s.sendRequest(request); err != nil {
+		return
+	}
+
+	// receive answer
+	var data []byte
+	for {
+		count, buf := 0, make([]byte, 1024)
+		if count, err = s.conn.Read(buf); err != nil {
+			return
+		}
+		if data = actionsFromRaw(append(data, buf[:count]...), acceptCallback); len(data) == 0 {
+			return
+		}
 	}
 }
 
-func (s *client) receiveLoop() {
-	var (
-		data         []byte
-		err          error
-		requestCheck bool
-	)
-	count, buf := 0, make([]byte, 1024)
-	for {
-		if count, err = s.conn.Read(buf); err != nil {
-			log.Println(count, err)
-			err = fmt.Errorf("AMI socket receive data error: %v", err.Error())
-			s.currentRequest.chanResponse <- initResponseError(err)
-			break
-		}
-
-		data, requestCheck = actionsFromRaw(append(data, buf[:count]...), s.currentRequest.chanResponse, s.event)
-		if requestCheck {
-			log.Println("REQURST_ACCEPTED")
-		}
+func (s *client) sendRequest(request Request) (err error) {
+	if _, err := s.conn.Write(request.raw()); err != nil {
+		err = fmt.Errorf("AMI socket send data error: %v", err.Error())
 
 	}
-	s.conn = nil
+	return
+}
+
+func (s *client) receiveLoop(errCallback func(error)) {
+	var (
+		data  []byte
+		count int
+		err   error
+	)
+	buf := make([]byte, 1024)
+	for {
+		if count, err = s.conn.Read(buf); err != nil {
+			err = fmt.Errorf("AMI socket receive data error: %v", err.Error())
+			errCallback(err)
+			return
+		}
+		data = actionsFromRaw(
+			append(data, buf[:count]...),
+			func(action ActionData) {
+				if action.isResponse() {
+					log.Println("RESPONSE...")
+				} else {
+					log.Println("EVENT ACCEPTED")
+				}
+			},
+		)
+	}
 }
 
 /*func (s *client) receiveResponse() (res Action, err error) {
@@ -213,12 +272,12 @@ func (s *client) Request(action string, data ActionData, chanResponse chan Respo
 
 // Close finish work with client
 func (s *client) Close() {
-	if s.done != nil {
-		close(s.done)
+	if s.state > StateStopped {
+		s.conn.Close()
 	}
 }
 
 // destructor for finalizer
 func destroyClient(cl *Client) {
-	close(cl.done)
+	cl.Close()
 }

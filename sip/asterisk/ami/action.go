@@ -16,8 +16,13 @@ func (s ActionData) raw() (res []byte) {
 	return
 }
 
+func (s ActionData) isResponse() bool {
+	_, check := s["Response"]
+	return check
+}
+
 func actionDataFromRaw(src []byte) (res ActionData) {
-	res, lines := make(ActionData), bytes.Split(src[:len(src)-4], []byte("\r\n"))
+	res, lines := make(ActionData), bytes.Split(src[:len(src)], []byte("\r\n"))
 	/// todo...
 	for _, line := range lines {
 		parts := bytes.SplitN(line, []byte(":"), 2)
@@ -28,20 +33,17 @@ func actionDataFromRaw(src []byte) (res ActionData) {
 	return
 }
 
-func actionsFromRaw(src []byte, chanResponse chan Response, chanEvent chan Event) (res []byte, requestAccepted bool) {
-	//log.Println("ACTIONS FROM RAW", string(src))
+func actionsFromRaw(src []byte, acceptCallback func(ActionData)) (res []byte) {
 	if bytes.Index(src, []byte("\r\n\r\n")) < 0 {
-		return src, false
+		return src
 	}
 	actionsRaw := bytes.Split(src, []byte("\r\n\r\n"))
 	log.Println(len(actionsRaw))
 	for i := 0; i < len(actionsRaw)-1; i++ {
 		action := actionDataFromRaw(actionsRaw[i])
-		log.Println(action)
-
+		acceptCallback(action)
 	}
 	res = actionsRaw[len(actionsRaw)-1]
-	log.Println("RES: ", string(res), len(res))
 	return
 }
 
