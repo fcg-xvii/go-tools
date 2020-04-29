@@ -17,8 +17,7 @@ func (s ActionData) raw() (res []byte) {
 }
 
 func actionDataFromRaw(src []byte) (res ActionData) {
-	res, lines := make(ActionData), bytes.Split(src[:len(src)-4], []byte("\r\n"))
-	/// todo...
+	res, lines := make(ActionData), bytes.Split(src, []byte("\r\n"))
 	for _, line := range lines {
 		parts := bytes.SplitN(line, []byte(":"), 2)
 		if len(parts) == 2 {
@@ -29,16 +28,18 @@ func actionDataFromRaw(src []byte) (res ActionData) {
 }
 
 func actionsFromRaw(src []byte, chanResponse chan Response, chanEvent chan Event) (res []byte, requestAccepted bool) {
-	//log.Println("ACTIONS FROM RAW", string(src))
 	if bytes.Index(src, []byte("\r\n\r\n")) < 0 {
 		return src, false
 	}
 	actionsRaw := bytes.Split(src, []byte("\r\n\r\n"))
-	log.Println(len(actionsRaw))
 	for i := 0; i < len(actionsRaw)-1; i++ {
 		action := actionDataFromRaw(actionsRaw[i])
 		log.Println(action)
-
+		if _, eventCheck := action["Event"]; eventCheck {
+			log.Println("EVENT")
+		} else {
+			log.Println("RESPONSE")
+		}
 	}
 	res = actionsRaw[len(actionsRaw)-1]
 	log.Println("RES: ", string(res), len(res))
