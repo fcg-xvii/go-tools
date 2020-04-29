@@ -22,12 +22,8 @@ func (s ActionData) isResponse() bool {
 }
 
 func actionDataFromRaw(src []byte) (res ActionData) {
-<<<<<<< HEAD
 	res, lines := make(ActionData), bytes.Split(src[:len(src)], []byte("\r\n"))
 	/// todo...
-=======
-	res, lines := make(ActionData), bytes.Split(src, []byte("\r\n"))
->>>>>>> 39665c488d7d1460fc10f4ab9fe8f8a47a133c12
 	for _, line := range lines {
 		parts := bytes.SplitN(line, []byte(":"), 2)
 		if len(parts) == 2 {
@@ -37,27 +33,15 @@ func actionDataFromRaw(src []byte) (res ActionData) {
 	return
 }
 
-<<<<<<< HEAD
-func actionsFromRaw(src []byte, acceptCallback func(ActionData)) (res []byte) {
-=======
-func actionsFromRaw(src []byte, chanResponse chan Response, chanEvent chan Event) (res []byte, requestAccepted bool) {
->>>>>>> 39665c488d7d1460fc10f4ab9fe8f8a47a133c12
+func actionsFromRaw(src []byte, accept func(ActionData)) (res []byte) {
 	if bytes.Index(src, []byte("\r\n\r\n")) < 0 {
 		return src
 	}
 	actionsRaw := bytes.Split(src, []byte("\r\n\r\n"))
+	log.Println(len(actionsRaw))
 	for i := 0; i < len(actionsRaw)-1; i++ {
 		action := actionDataFromRaw(actionsRaw[i])
-<<<<<<< HEAD
-		acceptCallback(action)
-=======
-		log.Println(action)
-		if _, eventCheck := action["Event"]; eventCheck {
-			log.Println("EVENT")
-		} else {
-			log.Println("RESPONSE")
-		}
->>>>>>> 39665c488d7d1460fc10f4ab9fe8f8a47a133c12
+		accept(action)
 	}
 	res = actionsRaw[len(actionsRaw)-1]
 	return

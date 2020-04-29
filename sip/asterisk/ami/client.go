@@ -107,9 +107,8 @@ func (s *client) Start() {
 	)
 
 	actionCallback := func(action ActionData) {
-		log.Println("ACTION", action)
 		if action.isResponse() {
-			log.Println("ACT")
+
 			if action["Response"] == "Success" {
 				s.setState(StateAuth, nil)
 			} else {
@@ -131,7 +130,8 @@ func (s *client) Start() {
 		return
 	}
 
-loop:
+	// queue needed...
+	/*loop:
 	for {
 		select {
 		case request := <-s.request:
@@ -143,7 +143,7 @@ loop:
 
 			}
 		}
-	}
+	}*/
 	return
 }
 
