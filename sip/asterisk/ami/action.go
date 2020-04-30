@@ -16,8 +16,8 @@ func (s ActionData) raw() (res []byte) {
 	return
 }
 
-func (s ActionData) isResponse() bool {
-	_, check := s["Response"]
+func (s ActionData) isEvent() bool {
+	_, check := s["Event"]
 	return check
 }
 
@@ -38,7 +38,7 @@ func actionsFromRaw(src []byte, accept func(ActionData)) (res []byte) {
 		return src
 	}
 	actionsRaw := bytes.Split(src, []byte("\r\n\r\n"))
-	log.Println(len(actionsRaw))
+	log.Println("ACT", len(actionsRaw))
 	for i := 0; i < len(actionsRaw)-1; i++ {
 		action := actionDataFromRaw(actionsRaw[i])
 		accept(action)
@@ -48,14 +48,44 @@ func actionsFromRaw(src []byte, accept func(ActionData)) (res []byte) {
 }
 
 // Request
-func initRequest(action string, data ActionData, chanResponse chan Response) Request {
-	data["Action"] = action
-	return Request{data, chanResponse}
+func InitRequest(action string) Request {
+	return Request{
+		ActionData: ActionData{
+			"Action": action,
+		},
+	}
 }
 
 type Request struct {
 	ActionData
+	Variables    map[string]string
 	chanResponse chan Response
+}
+
+func (s *Request) SetParam(key, value string) {
+	s.ActionData[key] = value
+}
+
+func (s *Request) SetVariable(key, value string) {
+	if s.Variables == nil {
+		s.Variables = make(map[string]string)
+	}
+	s.Variables[key] = value
+}
+
+func (s *Request) raw() []byte {
+	if len(s.Variables) > 0 {
+		vars, count := "", 0
+		for key, val := range s.Variables {
+			vars += fmt.Sprintf("%v=%v", key, val)
+			if count < len(s.Variables)-1 {
+				vars += "," // todo 1.5 or lower splitter is '|'
+			}
+			count++
+		}
+		s.ActionData["Variable"] = vars
+	}
+	return s.ActionData.raw()
 }
 
 // Response
@@ -73,7 +103,7 @@ type Response struct {
 }
 
 func (s Response) IsError() bool {
-	return s.ActionData["Action"] == "Error"
+	return s.ActionData["Response"] == "Error"
 }
 
 func (s Response) ErrorMessage() string {
@@ -83,4 +113,8 @@ func (s Response) ErrorMessage() string {
 // Event
 type Event struct {
 	ActionData
+}
+
+func (s Event) Name() string {
+	return s.ActionData["Event"]
 }

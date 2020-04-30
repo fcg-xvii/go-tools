@@ -21,32 +21,33 @@ func init() {
 func TestClient(t *testing.T) {
 	log.Println(host, login, password)
 
-	cl := Open(host, login, password, func(state State, err error) {
+	var cl *Client
+	cl = New(host, login, password, func(state State, err error) {
 		log.Println("STATE_CHANGED", state, err)
+		switch state {
+		case StateStopped:
+			{
+				time.Sleep(time.Second * 5)
+				log.Println("Reconnect...")
+				cl.Start()
+			}
+		}
 	})
 
-	req := initRequest(
-		"Originate",
-		ActionData{
-			"Channel": "SIP/777",
-			"Async":   "yes",
-		},
-		make(chan Response, 1),
-	)
+	go cl.Start()
 
-	cl.Start()
+	req := InitRequest("Originate")
+	req.SetParam("Channel", "sip/777")
+	req.SetParam("Async", "yes")
+	req.SetVariable("one", "1")
+	req.SetVariable("two", "2")
 
-	resp := <-req.chanResponse
+	resp, accepted := cl.Request(req, 0)
 
-	log.Println("RESP", resp)
+	log.Println("RESP!!!!!!!!!!!!!!!!!!!!!!!!!", resp, accepted)
 
-	/*resp, err := cl.Request(Action{
-		"Action":  "Originate",
-		"Channel": "sip/777",
-		"Data":    "1234567",
-		"Async":   "yes",
-	})
-	log.Println(resp, err)*/
-	time.Sleep(time.Second * 30)
+	//log.Println(resp, err)
+
+	time.Sleep(time.Second * 500)
 	cl.Close()
 }

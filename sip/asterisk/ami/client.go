@@ -1,11 +1,13 @@
 package ami
 
 import (
+	"container/list"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 	"runtime"
+	"time"
 )
 
 type State byte
@@ -19,7 +21,7 @@ const (
 	StateBusy
 )
 
-func Open(host, login, password string, stateChanged func(State, error)) (cl *Client) {
+func New(host, login, password string, stateChanged func(State, error)) (cl *Client) {
 	cl = &Client{
 		&client{
 			host:         host,
@@ -30,6 +32,8 @@ func Open(host, login, password string, stateChanged func(State, error)) (cl *Cl
 			request:      make(chan Request),
 			response:     make(chan Response),
 			event:        make(chan Event),
+			queue:        list.New(),
+			socketClosed: make(chan error),
 		},
 	}
 	runtime.SetFinalizer(cl, destroyClient)
@@ -42,26 +46,61 @@ type Client struct {
 }
 
 type client struct {
-	host         string
-	login        string
-	password     string
-	conn         net.Conn
-	request      chan Request
-	response     chan Response
-	event        chan Event
-	stateChanged func(State, error)
-	state        State
+	host            string
+	login           string
+	password        string
+	conn            net.Conn
+	request         chan Request
+	response        chan Response
+	event           chan Event
+	clientSideEvent chan Event
+	stateChanged    func(State, error)
+	state           State
+	queue           *list.List
+	socketClosed    chan error
 }
 
+//func (s *client)
+
 func (s *client) setState(state State, err error) {
+	oldState := s.state
 	s.state = state
-	if s.stateChanged != nil {
+	if s.stateChanged != nil && (state != oldState || err != nil) {
 		s.stateChanged(state, err)
+	}
+	s.state = state
+}
+
+func (s *client) OpenEventChannel() chan Event {
+	if s.clientSideEvent == nil {
+		s.clientSideEvent = make(chan Event)
+	}
+	return s.clientSideEvent
+}
+
+func (s *client) eventAccepted(event Event) {
+	switch event.Name() {
+	case "FullyBooted":
+		{
+			if s.state == StateAuth {
+				if s.queue.Len() == 0 {
+					s.setState(StateAvailable, nil)
+				} else {
+					s.sendQueueRequest()
+				}
+			}
+		}
+	}
+
+	// send event to client side
+	if s.clientSideEvent != nil {
+		s.clientSideEvent <- event
 	}
 }
 
 // start open connection to asterisk ami server
 func (s *client) Start() {
+
 	var err error
 
 	// check state. StateStopped needed
@@ -91,60 +130,90 @@ func (s *client) Start() {
 	}
 
 	// greetings received, make attempt to auth
+	auth := InitRequest("Login")
+	auth.SetParam("UserName", s.login)
+	auth.SetParam("Secret", s.password)
 
-	// start receive data loop
-	/*go s.receiveLoop(func(socketError error) {
-		err = socketError
-	})*/
-
-	auth := initRequest(
-		"Login",
-		ActionData{
+	/*ActionData{
 			"UserName": s.login,
 			"Secret":   s.password,
 		},
 		make(chan Response),
-	)
+	)*/
 
 	actionCallback := func(action ActionData) {
-		if action.isResponse() {
-
-			if action["Response"] == "Success" {
+		if action.isEvent() {
+			s.eventAccepted(Event{action})
+		} else {
+			response := Response{action}
+			if !response.IsError() {
 				s.setState(StateAuth, nil)
 			} else {
-				s.conn.Close()
 				err = fmt.Errorf("AMI authentication error: %v", action["Message"])
 				return
-			}
-		} else {
-			if action["Event"] == "FullyBooted" {
-				if s.state == StateAuth {
-					s.setState(StateAvailable, nil)
-				}
 			}
 		}
 	}
 
-	if err = s.sendSingleRequest(auth, actionCallback); err != nil {
-		err = fmt.Errorf("AMI greetings receive error: %v", err.Error())
+	if socketErr := s.sendSingleRequest(auth, actionCallback); socketErr != nil || err != nil {
+		if err == nil {
+			err = socketErr
+		}
 		return
 	}
 
-	// queue needed...
-	/*loop:
+	go s.receiveLoop()
+
+loop:
 	for {
 		select {
 		case request := <-s.request:
 			{
+				s.queue.PushBack(request)
+				if s.state == StateAvailable {
+					s.setState(StateBusy, nil)
+					if err = s.sendQueueRequest(); err != nil {
+						break loop
+					}
+				}
 
 			}
 		case event := <-s.event:
 			{
-
+				log.Println("EVENT", event)
 			}
+		case response := <-s.response:
+			{
+				log.Println("RESPONSE_ACCEPTED", response)
+				log.Println("===============================================", s.queue.Len())
+				reqElem := s.queue.Front()
+				request := reqElem.Value.(Request)
+				request.chanResponse <- response
+				close(request.chanResponse)
+				s.queue.Remove(reqElem)
+				log.Println("===============================================", s.queue.Len())
+				if err = s.sendQueueRequest(); err != nil {
+					break loop
+				}
+			}
+		case err = <-s.socketClosed:
+			break loop
 		}
-	}*/
+	}
+
 	return
+}
+
+func (s *client) sendQueueRequest() error {
+	log.Println("SEND_ELEM", s.queue.Len())
+	if s.queue.Len() > 0 {
+		s.setState(StateBusy, nil)
+		req := s.queue.Front().Value.(Request)
+		return s.sendRequest(req)
+	} else {
+		s.setState(StateAvailable, nil)
+		return nil
+	}
 }
 
 func (s *client) receiveSingle() (data []byte, err error) {
@@ -182,7 +251,7 @@ func (s *client) sendRequest(request Request) (err error) {
 	return
 }
 
-func (s *client) receiveLoop(errCallback func(error)) {
+func (s *client) receiveLoop() {
 	var (
 		data  []byte
 		count int
@@ -192,20 +261,36 @@ func (s *client) receiveLoop(errCallback func(error)) {
 	for {
 		if count, err = s.conn.Read(buf); err != nil {
 			err = fmt.Errorf("AMI socket receive data error: %v", err.Error())
-			errCallback(err)
+			s.socketClosed <- err
 			return
 		}
 		data = actionsFromRaw(
 			append(data, buf[:count]...),
 			func(action ActionData) {
-				if action.isResponse() {
-					log.Println("RESPONSE...")
+				if action.isEvent() {
+					s.event <- Event{action}
 				} else {
-					log.Println("EVENT ACCEPTED")
+					s.response <- Response{action}
 				}
 			},
 		)
 	}
+}
+
+func (s *client) Request(req Request, timeout time.Duration) (resp Response, accepted bool) {
+	req.chanResponse = make(chan Response)
+	s.request <- req
+	if timeout == 0 {
+		resp, accepted = <-req.chanResponse
+	} else {
+		select {
+		case resp, accepted = <-req.chanResponse:
+			accepted = true
+		case <-time.After(timeout):
+			break
+		}
+	}
+	return
 }
 
 /*func (s *client) receiveResponse() (res Action, err error) {
