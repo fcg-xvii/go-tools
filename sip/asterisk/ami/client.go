@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"runtime"
 	"time"
@@ -180,18 +179,17 @@ loop:
 			}
 		case event := <-s.event:
 			{
-				log.Println("EVENT", event)
+				if s.clientSideEvent != nil {
+					s.clientSideEvent <- event
+				}
 			}
 		case response := <-s.response:
 			{
-				log.Println("RESPONSE_ACCEPTED", response)
-				log.Println("===============================================", s.queue.Len())
 				reqElem := s.queue.Front()
 				request := reqElem.Value.(Request)
 				request.chanResponse <- response
 				close(request.chanResponse)
 				s.queue.Remove(reqElem)
-				log.Println("===============================================", s.queue.Len())
 				if err = s.sendQueueRequest(); err != nil {
 					break loop
 				}
@@ -205,7 +203,6 @@ loop:
 }
 
 func (s *client) sendQueueRequest() error {
-	log.Println("SEND_ELEM", s.queue.Len())
 	if s.queue.Len() > 0 {
 		s.setState(StateBusy, nil)
 		req := s.queue.Front().Value.(Request)

@@ -3,7 +3,6 @@ package ami
 import (
 	"bytes"
 	"fmt"
-	"log"
 )
 
 type ActionData map[string]string
@@ -38,7 +37,6 @@ func actionsFromRaw(src []byte, accept func(ActionData)) (res []byte) {
 		return src
 	}
 	actionsRaw := bytes.Split(src, []byte("\r\n\r\n"))
-	log.Println("ACT", len(actionsRaw))
 	for i := 0; i < len(actionsRaw)-1; i++ {
 		action := actionDataFromRaw(actionsRaw[i])
 		accept(action)
