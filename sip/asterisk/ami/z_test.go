@@ -48,6 +48,6 @@ func TestClient(t *testing.T) {
 
 	//log.Println(resp, err)
 
-	time.Sleep(time.Second * 500)
+	time.Sleep(time.Second * 10)
 	cl.Close()
 }
