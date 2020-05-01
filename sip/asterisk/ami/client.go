@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"runtime"
 	"time"
@@ -19,6 +20,25 @@ const (
 	StateAvailable
 	StateBusy
 )
+
+func (s State) String() string {
+	switch s {
+	case StateStopped:
+		return "Stopped"
+	case StateConnection:
+		return "Connection"
+	case StateConnected:
+		return "Connected"
+	case StateAuth:
+		return "Auth"
+	case StateAvailable:
+		return "Available"
+	case StateBusy:
+		return "Busy"
+	default:
+		return ""
+	}
+}
 
 func New(host, login, password string, stateChanged func(State, error)) (cl *Client) {
 	cl = &Client{
@@ -141,6 +161,7 @@ func (s *client) Start() {
 	)*/
 
 	actionCallback := func(action ActionData) {
+		log.Println(action)
 		if action.isEvent() {
 			s.eventAccepted(Event{action})
 		} else {
@@ -178,11 +199,7 @@ loop:
 
 			}
 		case event := <-s.event:
-			{
-				if s.clientSideEvent != nil {
-					s.clientSideEvent <- event
-				}
-			}
+			s.eventAccepted(event)
 		case response := <-s.response:
 			{
 				reqElem := s.queue.Front()

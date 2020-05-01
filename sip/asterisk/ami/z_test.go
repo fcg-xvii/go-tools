@@ -19,6 +19,9 @@ func init() {
 }
 
 func TestClient(t *testing.T) {
+	if host == "" {
+		return
+	}
 	log.Println(host, login, password)
 
 	var cl *Client
@@ -38,6 +41,7 @@ func TestClient(t *testing.T) {
 
 	req := InitRequest("Originate")
 	req.SetParam("Channel", "sip/777")
+	req.SetParam("Context", "from-test")
 	req.SetParam("Async", "yes")
 	req.SetVariable("one", "1")
 	req.SetVariable("two", "2")
@@ -48,6 +52,6 @@ func TestClient(t *testing.T) {
 
 	//log.Println(resp, err)
 
-	time.Sleep(time.Second * 10)
-	cl.Close()
+	time.Sleep(time.Second * 300)
+	//cl.Close()
 }
