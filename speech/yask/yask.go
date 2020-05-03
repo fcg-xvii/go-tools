@@ -1,46 +1,84 @@
 package yask
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strconv"
 )
 
-const (
-	YaSTTUrl   = "https://stt.api.cloud.yandex.net/speech/v1/stt:recognize"
-	FormatLPCM = "lpcm"
-	FormatOgg  = "oggopus"
-	Rate8k     = "8000"
-	Rate16k    = "16000"
-	Rate48k    = "48000"
-)
+func STTConfigDefault(yaFolderID, yaAPIKey string, data io.Reader) *STTConfig {
+	return &STTConfig{
+		Lang:            "ru-RU",
+		Topic:           "general",
+		ProfanityFilter: false,
+		Format:          FormatLPCM,
+		Rate:            Rate8k,
+		YaFolderID:      yaFolderID,
+		YaAPIKey:        yaAPIKey,
+		Data:            data,
+	}
+}
 
 type STTConfig struct {
 	Lang            string
 	Topic           string
 	ProfanityFilter bool
 	Format          string
-	Rate            string
+	Rate            int
 	YaFolderID      string
 	YaAPIKey        string
 	Data            io.Reader
 }
 
 func (s *STTConfig) URI() string {
-	vals := url.Values{
-		"lang":            s.Lang,
-		"topic":           s.Topic,
-		"profanityFilter": strconv.FormatBool(s.ProfanityFilter),
-		"format":          s.Format,
-		"simpleRateHertz": s.Rate,
-		"folderId":        s.YaFolderID,
+	vars := url.Values{
+		"lang":            []string{s.Lang},
+		"topic":           []string{s.Topic},
+		"profanityFilter": []string{strconv.FormatBool(s.ProfanityFilter)},
+		"format":          []string{s.Format},
+		"simpleRateHertz": []string{strconv.FormatInt(int64(s.Rate), 10)},
+		"folderId":        []string{s.YaFolderID},
 	}
 
-	url := fmt.Sprintf("%v?%v", YaSTTUrl, vals.Encode())
+	url := fmt.Sprintf("%v?%v", YaSTTUrl, vars.Encode())
 	return url
 }
 
-func SpeechToTextShort() {
+func SpeechToTextShort(conf *STTConfig) (string, error) {
+	req, err := http.NewRequest(
+		"POST",
+		conf.URI(),
+		conf.Data,
+	)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Transfer-encoding", "chunked")
+	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %v", conf.YaAPIKey))
 
+	cl := new(http.Client)
+
+	resp, err := cl.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	rSource, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	m := make(map[string]interface{})
+	if err = json.Unmarshal(rSource, &m); err != nil {
+		return "", err
+	}
+
+	result := fmt.Sprint(m["result"])
+	return result, nil
 }
+
+//////////////////////////////////////////////////////////////
