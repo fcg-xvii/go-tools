@@ -27,7 +27,7 @@ type STTConfig struct {
 	Data            io.Reader
 }
 
-func (s *STTConfig) URI() sring {
+func (s *STTConfig) URI() string {
 	vals := url.Values{
 		"lang":            s.Lang,
 		"topic":           s.Topic,
