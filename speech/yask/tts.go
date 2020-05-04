@@ -1,18 +1,12 @@
 package yask
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/go-audio/audio"
-	"github.com/go-audio/wav"
 )
 
 type TTSConfig struct {
@@ -60,7 +54,8 @@ func TTSDefaultConfigSSML(yaFolderID, yaAPIKey, SSML string) *TTSConfig {
 	return conf
 }
 
-//
+// TextToSpeech returns PCM or OGG sound stream using the service Yandex Speech Kit.
+// Result PCM stream can be converted to Wav stream using EncodePCMToWav
 func TextToSpeech(config *TTSConfig) (io.ReadCloser, error) {
 	httpForm := url.Values{
 		"lang":            []string{config.Lang},
@@ -99,45 +94,4 @@ func TextToSpeech(config *TTSConfig) (io.ReadCloser, error) {
 	}
 
 	return response.Body, nil
-}
-
-func unmarshallYaError(r io.Reader) (err error) {
-	var data []byte
-	if data, err = ioutil.ReadAll(r); err != nil {
-		return
-	}
-	mErr := make(map[string]interface{})
-	if err = json.Unmarshal(data, &mErr); err == nil {
-		err = fmt.Errorf("Yandex request error: %v", mErr["error_message"])
-	}
-	return
-}
-
-func EncodePCMToWav(in io.Reader, out io.WriteSeeker, sampleRate, bitDepth, numChans int) error {
-	encoder := wav.NewEncoder(out, sampleRate, bitDepth, numChans, 1)
-
-	audioBuf := &audio.IntBuffer{
-		Format: &audio.Format{
-			NumChannels: numChans,
-			SampleRate:  sampleRate,
-		},
-	}
-
-	for {
-		var sample int16
-		if err := binary.Read(in, binary.LittleEndian, &sample); err != nil {
-			if err == io.EOF {
-				break
-			} else {
-				return err
-			}
-		}
-		audioBuf.Data = append(audioBuf.Data, int(sample))
-	}
-
-	if err := encoder.Write(audioBuf); err != nil {
-		return err
-	}
-
-	return encoder.Close()
 }
