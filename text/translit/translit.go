@@ -127,7 +127,7 @@ func EncodeToBS(text string) string {
 	return encode(text, alalcRuEn, nil)
 }
 
-// EncodeToBS encodes text with ICAO mappings
+// EncodeToICAO encodes text with ICAO mappings
 func EncodeToICAO(text string) string {
 	return encode(text, icaoRuEn, nil)
 }
