@@ -35,7 +35,7 @@ func main() {
     // By default language in config russian. For english must setup 
     // english language and voice
     config.Lang = yask.LangEN
-	config.Voice = yask.VoiceNick
+    config.Voice = yask.VoiceNick
 
 
 	// speech synthesis
