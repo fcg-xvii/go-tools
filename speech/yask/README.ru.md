@@ -1,6 +1,6 @@
 <p align="center">
   <span>Русский</span> |
-  <a href="README.md#go-tools">English</a>  
+  <a href="README.md#go-tools">English</a>
 </p>
 
 # yask
@@ -15,6 +15,9 @@
 </ul>
 
 ### Синтез речи
+
+В данном примере 
+
 ```golang
 import (
 	"log"
@@ -24,20 +27,21 @@ import (
 )
 
 func main() {
-	yaFolderID := "b1g..."                              // идентификатор директории в yandex
-	yaAPIKey := "AQVNy..."            // ключ api yandex
+	yaFolderID := "b1g..."    // идентификатор директории в yandex
+	yaAPIKey := "AQVNy..."    // ключ api yandex
 	text := "Привет, это тест синтеза речи с помощью сервиса Яндекса" // текст для синтеза
 
-	// инициализация конфигурации для синтеза
+	// инициализация конфигурации для синтеза (по умоланию установлен формат lpcm)
 	config := yask.TTSDefaultConfigText(yaFolderID, yaAPIKey, text)
 
-	//
+	// синтез речи
 	r, err := yask.TextToSpeech(config)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+    // файл для сохранения результата
 	f, err := os.OpenFile("tts.wav", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0655)
 	if err != nil {
 		log.Println(err)
@@ -45,6 +49,7 @@ func main() {
 	}
 	defer f.Close()
 
+    // кодировка lpcm в wav формат
 	if err := yask.EncodePCMToWav(r, f, config.Rate, 16, 1); err != nil {
 		log.Println(err)
 		return
@@ -52,6 +57,44 @@ func main() {
 }
 ```
 
+### Распознавание речи в текст
+> Пример разпознавания коротких аудио. В примере используется файл в формате wav, который допускается в использовании со значением формата конфигурации <b>lpcm</b>
+```golang
+package main
+
+import (
+	"log"
+	"os"
+
+	"github.com/fcg-xvii/go-tools/speech/yask"
+)
+
+func main() {
+	yaFolderID := "b1g4..." // идентификатор директории в yandex
+	yaAPIKey := "AQVNyr..." // ключ api yandex
+	dataFileName := "data.wav" // файл в формате wav для распознавания
+
+    // открытие аудиофайла
+	f, err := os.Open(dataFileName)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer f.Close()
+
+    // создание конфигурации распознавания
+	config := yask.STTConfigDefault(yaFolderID, yaAPIKey, f)
+
+    // Распознавание звука в текст
+	text, err := yask.SpeechToTextShort(config)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	log.Println(text)
+}
+```
 
 
 
