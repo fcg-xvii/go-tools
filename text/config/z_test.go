@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 )
 
@@ -8,7 +9,16 @@ var (
 	splitFile = "z_split.config"
 )
 
+func checkConfigExists() bool {
+	_, err := os.Stat(splitFile)
+	return err == nil
+}
+
 func TestSplitFile(t *testing.T) {
+	if !checkConfigExists() {
+		t.Log("Expected config file ", splitFile)
+		return
+	}
 	if s, err := SplitFile(splitFile, "::"); err != nil {
 		t.Error(err)
 	} else {
@@ -17,6 +27,10 @@ func TestSplitFile(t *testing.T) {
 }
 
 func TestSplitFileMap(t *testing.T) {
+	if !checkConfigExists() {
+		t.Log("Expected config file ", splitFile)
+		return
+	}
 	if m, err := SplitFileToMap(splitFile, "::", "host", "login", "password", "undefined"); err != nil {
 		t.Error(err)
 	} else {
@@ -25,6 +39,10 @@ func TestSplitFileMap(t *testing.T) {
 }
 
 func TestSplitFileVals(t *testing.T) {
+	if !checkConfigExists() {
+		t.Log("Expected config file ", splitFile)
+		return
+	}
 	var host, login, password string
 	if err := SplitFileToVals(splitFile, "::", &host, &login, &password); err != nil {
 		t.Error(err)
