@@ -15,6 +15,42 @@
 </ul>
 
 ### Синтез речи
+```golang
+import (
+	"log"
+	"os"
+
+	"github.com/fcg-xvii/go-tools/speech/yask"
+)
+
+func main() {
+	yaFolderID := "b1g..."                              // идентификатор директории в yandex
+	yaAPIKey := "AQVNy..."            // ключ api yandex
+	text := "Привет, это тест синтеза речи с помощью сервиса Яндекса" // текст для синтеза
+
+	// инициализация конфигурации для синтеза
+	config := yask.TTSDefaultConfigText(yaFolderID, yaAPIKey, text)
+
+	//
+	r, err := yask.TextToSpeech(config)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	f, err := os.OpenFile("tts.wav", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0655)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer f.Close()
+
+	if err := yask.EncodePCMToWav(r, f, config.Rate, 16, 1); err != nil {
+		log.Println(err)
+		return
+	}
+}
+```
 
 
 
