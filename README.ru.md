@@ -15,5 +15,3 @@
 ## Лицензия
 
 The MIT License (MIT), подробнее [LICENSE](LICENSE).
-
-Copyright (c) 2020, Владимир Максимов <flint@77i.su>
