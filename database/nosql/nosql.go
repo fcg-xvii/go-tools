@@ -1,5 +1,5 @@
-//Package nosql makes from SQL database to NoSQL.
-//Source database must support json type
+// Package nosql makes from SQL database to NoSQL.
+// Source database must support json type
 package nosql
 
 import (
