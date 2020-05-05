@@ -21,6 +21,30 @@ func New(openMethod OpenTXMethod) *NoSQL {
 	return &NoSQL{openMethod}
 }
 
+func (s_self *NoSQL) CallJSON(function string, rawJSON []byte) (resRawJSON []byte, err error) {
+	// open tx
+	var tx *sql.Tx
+	if tx, err = _self.openMethod(); err == nil {
+		// execute query and scan result
+		row := tx.QueryRow(fmt.Sprintf("select * from %v($1)", function), rawJSON)
+		if err = row.Scan(&resRawJSON); err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}
+	return
+}
+
+func (_self *NoSQL) CallObj(function string, data interface{}) (resRawJSON []byte, err error) {
+	// convert incoming object to raw json
+	var raw []byte
+	if raw, err = json.Marshal(data); err != nil {
+		return
+	}
+	return _self.CallJSON(function, raw)
+}
+
 // Query execute request to database with (function(json) json) interface.
 // Function should return json value
 func (_self *NoSQL) Call(function string, data interface{}) (res interface{}, err error) {
