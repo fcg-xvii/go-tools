@@ -3,7 +3,6 @@ package nosql
 import (
 	"database/sql"
 	"io/ioutil"
-	"log"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -17,7 +16,6 @@ func init() {
 	// read postgres connection string from file z_data.config
 	connSource, _ := ioutil.ReadFile("z_data.config")
 	dbConn = string(connSource)
-	log.Println("DB connection string", dbConn)
 }
 
 func TestNoSQL(t *testing.T) {
