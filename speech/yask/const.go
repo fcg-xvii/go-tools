@@ -114,7 +114,7 @@ var (
 		Voice{"Sila Erkan", "Сыла Эркан", VoiceSilaerkan, LangTR, false, false},
 		Voice{"Alyss", "Элис", VoiceAlyss, LangTR, false, false},
 		Voice{"Nick", "Ник", VoiceNick, LangTR, true, false},
-		Voice{"Alena", "Алёна", VoiceNick, LangEN, false, true},
-		Voice{"Filipp", "Филипп", VoiceNick, LangEN, true, true},
+		Voice{"Alena", "Алёна", VoiceNick, LangRU, false, true},
+		Voice{"Filipp", "Филипп", VoiceNick, LangRU, true, true},
 	}
 )

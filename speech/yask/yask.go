@@ -54,13 +54,21 @@ func unmarshallYaError(r io.Reader) (err error) {
 }
 
 // Voises returns slice of available vioces
-// lang: ru-RU, en-EN, tr-TR
+// lang: empty (all alngs) ru-RU, en-EN, tr-TR
 // sex: 0 - all, 1 - male, 2 - female
 // premium: 0 - all, 1 - standard only, 2 - premium only
-func Voices(lang string, sex, premium int) (res []string) {
+func Voices(lang string, sex, premium int) (res []Voice) {
 	for _, voice := range voices {
-		if voice.Lang == lang {
-
+		if len(lang) > 0 && voice.Lang != lang {
+			continue
 		}
+		if sex != 0 && (sex == 1 && !voice.Male || sex == 2 && voice.Male) {
+			continue
+		}
+		if premium != 0 && (voice.Premium && premium != 2 || !voice.Premium && premium != 1) {
+			continue
+		}
+		res = append(res, voice)
 	}
+	return
 }

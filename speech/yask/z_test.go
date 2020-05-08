@@ -64,3 +64,13 @@ func TestSpeechToTextShort(t *testing.T) {
 	}
 	t.Log(text)
 }
+
+func TestVoiseFilter(t *testing.T) {
+	// Get all voices
+	items := Voices("", 0, 0)
+	t.Log(len(voices), len(items), items)
+
+	// Get only russian standard females
+	items = Voices(LangRU, 2, 1)
+	t.Log(len(voices), len(items), items)
+}
