@@ -1,7 +1,6 @@
 <p align="center">
   <span>Русский</span> |
-  <a href="README.md#go-tools">English</a>
-  
+  <a href="README.md#go-tools">English</a> 
 </p>
 
 [![Build Status](https://travis-ci.org/fcg-xvii/go-tools.svg?branch=master)](https://travis-ci.org/fcg-xvii/go-tools) 
