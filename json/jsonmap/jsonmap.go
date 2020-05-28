@@ -133,6 +133,17 @@ func (s JSONMap) String(key, defaultVal string) string {
 	return defaultVal
 }
 
+// Slce returns slice of interface{} by key
+// If key isn't defined or have a different type will be returned defaultVal arg value
+func (s JSONMap) Slice(key string, defaultVal []interface{}) (res []interface{}) {
+	if arr, check := s[key].([]interface{}); check {
+		res = arr
+	} else {
+		res = defaultVal
+	}
+	return
+}
+
 // StringSlice returns string slice by key
 // If key isn't defined will be returned defaultVal arg value
 func (s JSONMap) StringSlice(key string, defaultVal []string) (res []string) {
