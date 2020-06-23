@@ -11,12 +11,12 @@ type cacheMapItem struct {
 }
 
 type cacheMap struct {
-	locker          *sync.RWMutex
-	items           map[interface{}]*cacheMapItem
-	liveDuration    time.Duration
-	maxSize         int64
-	cleanerWork     bool
-	stopCleanerChan chan struct{}
+	locker               *sync.RWMutex
+	items                map[interface{}]*cacheMapItem
+	liveDuration         time.Duration
+	maxSize              int64
+	cleanerWork          bool
+	stopCleanerChan      chan struct{}
 	itemRewmovedCallback func(key, value interface{})
 }
 
@@ -41,7 +41,7 @@ func (s *cacheMap) runCleaner() {
 				s.locker.Lock()
 				for key, val := range s.items {
 					if now > val.expire {
-						s.delete(key, value)
+						s.delete(key, val)
 					}
 				}
 				s.locker.RUnlock()
@@ -50,16 +50,17 @@ func (s *cacheMap) runCleaner() {
 			{
 				s.cleanerWork = false
 				ticker.Stop()
-				if s.callbackRemoved != nil {
+				// todo...
+				/*if s.callbackRemoved != nil {
 					s.callbackRemoved(s.items)
-				}
+				}*/
 				return
 			}
 		}
 	}
 }
 
-func (s *cacheMap) delete(key interface{}, value ...interface{}) 
+func (s *cacheMap) delete(key interface{}, value ...interface{}) {
 	if s.itemRewmovedCallback != nil {
 		var val interface{}
 		if len(value) > 0 {
@@ -72,7 +73,7 @@ func (s *cacheMap) delete(key interface{}, value ...interface{})
 	delete(s.items, key)
 }
 
-// Delete removes cached object 
+// Delete removes cached object
 func (s *cacheMap) Delete(key interface{}) {
 	s.locker.Lock()
 	s.delete(key)
@@ -84,13 +85,14 @@ func (s *cacheMap) Size() (res int) {
 	s.locker.RLock()
 	res = len(s.items)
 	s.locker.RUnlock()
+	return res
 }
 
 // Each implements a map bypass for each key using the callback function. If the callback function returns false, then the cycle stops
-func (s *cacheMap) Each(callback func (interface{}, interface{}) bool) {
+func (s *cacheMap) Each(callback func(interface{}, interface{}) bool) {
 	s.locker.RLock()
 	for key, val := range s.items {
-		if !callback(key, value) {
+		if !callback(key, val) {
 			s.locker.Unlock()
 			return
 		}
