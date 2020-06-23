@@ -1,6 +1,7 @@
 package ami
 
 import (
+	"context"
 	"log"
 	"testing"
 	"time"
@@ -25,33 +26,95 @@ func TestClient(t *testing.T) {
 	log.Println(host, login, password)
 
 	var cl *Client
-	cl = New(host, login, password, func(state State, err error) {
+	cl = New(host, login, password, nil, func(state State, err error) {
 		log.Println("STATE_CHANGED", state, err)
 		switch state {
 		case StateStopped:
 			{
 				time.Sleep(time.Second * 5)
 				log.Println("Reconnect...")
-				cl.Start()
+				go cl.Start()
 			}
 		}
 	})
 
+	/*go func() {
+		for e := range cl.Event() {
+			log.Println("EVENT", e.Name(), "***", e.ActionData["Uniqueid"], "======", e)
+		}
+	}()*/
+
 	go cl.Start()
 
-	req := InitRequest("Originate")
-	req.SetParam("Channel", "sip/777")
-	req.SetParam("Context", "from-test")
-	req.SetParam("Async", "yes")
-	req.SetVariable("one", "1")
-	req.SetVariable("two", "2")
+	//req := InitRequest("Originate")
+	//req.SetParam("Channel", "sip/777")
+	//req.SetParam("Context", "from-test")
+	//req.SetParam("Async", "yes")
+	//req.SetVariable("one", "1")
+	//req.SetVariable("two", "2")
 
-	resp, accepted := cl.Request(req, 0)
+	//resp, accepted := cl.Request(req, 0)
 
-	log.Println("RESP!!!!!!!!!!!!!!!!!!!!!!!!!", resp, accepted)
+	if originate, err := cl.Originate(&OriginateRequest{
+		Channel:  "sip/777",
+		Priority: "1",
+		Exten:    "s",
+		Context:  "call-test",
+		Async:    true,
+		CallerID: "777",
+		Timeout:  time.Second * 15,
+	}); err == nil {
+		ctx, _ := context.WithCancel(originate.Context())
+		ech := originate.Events()
+		for {
+			select {
+			case e := <-ech:
+				{
+					log.Println("CEVENT", e.Name())
+				}
+			case <-ctx.Done():
+				{
+					log.Println("CALL FINISHED")
+					return
+				}
+			}
+		}
+	} else {
+		t.Fatal(err)
+	}
+
+	//log.Println("ORIGINATE", originate, err)
+
+	/*cl.Originate(&OriginateRequest{
+		Channel:  "sip/101",
+		Priority: "1",
+		Exten:    "s",
+		Context:  "call-test",
+		Async:    true,
+	})*/
+
+	/*cl.Originate(&OriginateRequest{
+		Channel:  "sip/777",
+		Priority: "1",
+		Exten:    "s",
+		Context:  "call-test",
+		Async:    true,
+		CallerID: "Test-Caller",
+		ActionID: "Test-Action",
+	})*/
+
+	/*cl.Originate(&OriginateRequest{
+		Channel:  "sip/101",
+		Context:  "call-test",
+		Async:    true,
+		CallerID: "Test-Caller",
+		ActionID: "Test-Action",
+	})*/
+
+	//log.Println("RESP!!!!!!!!!!!!!!!!!!!!!!!!!", resp, accepted)
 
 	//log.Println(resp, err)
 
-	time.Sleep(time.Second * 300)
+	//time.Sleep(time.Second * 300)
 	//cl.Close()
 }
