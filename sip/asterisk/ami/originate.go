@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -140,7 +139,6 @@ func (s *Originate) Events() (res <-chan Event) {
 	}
 	res = s.userEventChan
 	s.locker.Unlock()
-	log.Println(res)
 	return
 }
 
