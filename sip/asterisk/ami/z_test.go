@@ -1,7 +1,6 @@
 package ami
 
 import (
-	"context"
 	"log"
 	"testing"
 	"time"
@@ -60,28 +59,21 @@ func TestClient(t *testing.T) {
 		Channel:  "sip/101",
 		Priority: "1",
 		Exten:    "s",
-		Context:  "call-test",
+		Context:  "manager-call-test-no-record",
 		CallerID: "101",
 		Timeout:  time.Second * 15,
 		Variable: jsonmap.JSONMap{
-			"ext_phone": "SIP/777",
+			"manager_sip": "SIP/777",
 		},
 	}); err == nil {
-		ctx, _ := context.WithCancel(originate.Context())
 		ech := originate.Events()
 		for {
-			select {
-			case e := <-ech:
-				{
-					log.Println("CEVENT", e.Name(), e)
-
-				}
-			case <-ctx.Done():
-				{
-					log.Println("CALL FINISHED")
-					return
-				}
+			e, ok := <-ech
+			if !ok {
+				log.Println("FINISHED")
+				return
 			}
+			log.Println("CEVENT", e.Name(), e)
 		}
 	} else {
 		t.Fatal(err)

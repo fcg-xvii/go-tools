@@ -1,7 +1,6 @@
 package ami
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -75,15 +74,12 @@ func initOriginate(req *OriginateRequest, client *Client) *Originate {
 		locker:           new(sync.RWMutex),
 		client:           client,
 	}
-	res.ctx, res.ctxCancel = context.WithCancel(context.Background())
 	go res.listenEvents()
 	return res
 }
 
 type Originate struct {
 	*OriginateRequest
-	ctx            context.Context
-	ctxCancel      context.CancelFunc
 	eventChan      <-chan Event
 	userEventChan  chan Event
 	locker         *sync.RWMutex
@@ -99,7 +95,7 @@ func (s *Originate) listenEvents() {
 		e, ok := <-s.eventChan
 		if !ok {
 			s.finished = true
-			s.ctxCancel()
+			close(s.userEventChan)
 			return
 		}
 		s.locker.RLock()
@@ -137,8 +133,4 @@ func (s *Originate) Events() (res <-chan Event) {
 	res = s.userEventChan
 	s.locker.Unlock()
 	return
-}
-
-func (s *Originate) Context() context.Context {
-	return s.ctx
 }
