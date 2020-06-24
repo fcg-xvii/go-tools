@@ -13,7 +13,6 @@ import (
 )
 
 func (s *Client) Originate(req *OriginateRequest) (*Originate, error) {
-	log.Println("OOORIGGGG")
 	req.uuid = time.Now().UnixNano()
 	timeout := RequestTimeoutDefault
 	if req.Timeout > timeout {
@@ -27,9 +26,6 @@ func (s *Client) Originate(req *OriginateRequest) (*Originate, error) {
 	if resp.IsError() {
 		return nil, fmt.Errorf("Originate error: %v", resp.ErrorMessage())
 	}
-	//if resp, check =
-
-	log.Println("RESPPPPPPP", resp)
 
 	res := initOriginate(req, s)
 

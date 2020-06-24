@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fcg-xvii/go-tools/json/jsonmap"
 	"github.com/fcg-xvii/go-tools/text/config"
 )
 
@@ -56,13 +57,16 @@ func TestClient(t *testing.T) {
 	//resp, accepted := cl.Request(req, 0)
 
 	if originate, err := cl.Originate(&OriginateRequest{
-		Channel:  "sip/777",
+		Channel:  "sip/101",
 		Priority: "1",
 		Exten:    "s",
 		Context:  "call-test",
 		Async:    true,
-		CallerID: "777",
+		CallerID: "101",
 		Timeout:  time.Second * 15,
+		Variable: jsonmap.JSONMap{
+			"ext_phone": "SIP/777",
+		},
 	}); err == nil {
 		ctx, _ := context.WithCancel(originate.Context())
 		ech := originate.Events()
@@ -70,7 +74,8 @@ func TestClient(t *testing.T) {
 			select {
 			case e := <-ech:
 				{
-					log.Println("CEVENT", e.Name())
+					log.Println("CEVENT", e.Name(), e)
+
 				}
 			case <-ctx.Done():
 				{
