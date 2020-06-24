@@ -61,7 +61,6 @@ func TestClient(t *testing.T) {
 		Priority: "1",
 		Exten:    "s",
 		Context:  "call-test",
-		Async:    true,
 		CallerID: "101",
 		Timeout:  time.Second * 15,
 		Variable: jsonmap.JSONMap{

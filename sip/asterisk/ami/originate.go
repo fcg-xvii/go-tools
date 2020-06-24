@@ -44,8 +44,6 @@ type OriginateRequest struct {
 	Account     string
 	Application string
 	Data        string
-	Async       bool
-	ActionID    string
 	uuid        int64
 }
 
@@ -62,8 +60,7 @@ func (s *OriginateRequest) Request() (res Request) {
 	res.SetParam("Account", s.Account)
 	res.SetParam("Application", s.Application)
 	res.SetParam("Data", s.Data)
-	res.SetParam("Async", fmt.Sprint(s.Async))
-	res.SetParam("ActionID", s.ActionID)
+	res.SetParam("Async", "true")
 	res.SetParam("ChannelID", fmt.Sprint(s.uuid))
 	res.SetVariables(s.Variable)
 	return res
