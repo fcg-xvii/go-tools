@@ -251,7 +251,6 @@ func (s *client) Start() {
 	auth.SetParam("Secret", s.password)
 
 	actionCallback := func(action ActionData) {
-		log.Println(action)
 		if action.isEvent() {
 			s.eventAccepted(Event{action, 0})
 		} else {
