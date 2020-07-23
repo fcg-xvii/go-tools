@@ -49,3 +49,11 @@ func TestSplitFileVals(t *testing.T) {
 	}
 	t.Log(host, login, password)
 }
+
+func TestEqual(t *testing.T) {
+	m, err := SplitFileToEquals("test_content/equal_conf.cfg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(m)
+}
