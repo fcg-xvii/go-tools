@@ -11,13 +11,41 @@ type cacheMapItem struct {
 }
 
 type cacheMap struct {
-	locker               *sync.RWMutex
-	items                map[interface{}]*cacheMapItem
-	liveDuration         time.Duration
-	maxSize              int64
-	cleanerWork          bool
-	stopCleanerChan      chan struct{}
-	itemRewmovedCallback func(key, value interface{})
+	locker          *sync.RWMutex
+	items           map[interface{}]*cacheMapItem
+	liveDuration    time.Duration
+	maxSize         int64
+	cleanerWork     bool
+	stopCleanerChan chan struct{}
+}
+
+func (s *cacheMap) runCleaner() {
+	ticker := time.NewTicker(s.liveDuration / 2)
+	for {
+		select {
+		case <-ticker.C:
+			{
+				now := time.Now().UnixNano()
+				s.locker.Lock()
+				for key, val := range s.items {
+					if now > val.expire {
+						s.delete(key)
+					}
+				}
+				s.locker.RUnlock()
+			}
+		case <-s.stopCleanerChan:
+			{
+				s.cleanerWork = false
+				ticker.Stop()
+				return
+			}
+		}
+	}
+}
+
+func (s *cacheMap) delete(key interface{}) {
+	delete(s.items, key)
 }
 
 func (s *cacheMap) set(key, value interface{}) {
@@ -31,46 +59,41 @@ func (s *cacheMap) set(key, value interface{}) {
 	}
 }
 
-func (s *cacheMap) runCleaner() {
-	ticker := time.NewTicker(s.liveDuration / 2)
-	for {
-		select {
-		case <-ticker.C:
-			{
-				now := time.Now().UnixNano()
-				s.locker.Lock()
-				for key, val := range s.items {
-					if now > val.expire {
-						s.delete(key, val)
-					}
-				}
-				s.locker.RUnlock()
-			}
-		case <-s.stopCleanerChan:
-			{
-				s.cleanerWork = false
-				ticker.Stop()
-				// todo...
-				/*if s.callbackRemoved != nil {
-					s.callbackRemoved(s.items)
-				}*/
-				return
-			}
+type CreateCall func(key interface{}) (interface{}, bool)
+
+func (s *cacheMap) get(key interface{}, call CreateCall) (res interface{}, check bool) {
+	var item *cacheMapItem
+	if item, check = s.items[key]; !check && call != nil {
+		if cVal, cCheck := call(key); cCheck {
+			s.set(key, cVal)
 		}
+	} else {
+		///...
 	}
+	return
 }
 
-func (s *cacheMap) delete(key interface{}, value ...interface{}) {
-	if s.itemRewmovedCallback != nil {
-		var val interface{}
-		if len(value) > 0 {
-			val = value[0]
-		} else {
-			val = s.items[key]
+func (s *cacheMap) Get(key interface{}) (res interface{}, check bool) {
+	s.locker.RLock()
+	res, check = s.get(key, cCall)
+	s.locker.RUnlock()
+	return
+}
+
+func (s *cacheMap) GetOrCreate(key interface{}, CreateMethod) interface{}) (res interface{}, check bool) {
+	if res, check = s.Get(key, cCall); !check {
+		s.locker.Lock()
+		if res, check = s.get(key, cCall); check {
+			s.locker.Unlock()
+			return
 		}
-		s.itemRewmovedCallback(key, val)
+
+		if key, res, check = createCall(key); check {
+			s.set(key, res)
+		}
+		s.locker.Unlock()
 	}
-	delete(s.items, key)
+	return
 }
 
 // Delete removes cached object
