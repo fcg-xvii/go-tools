@@ -1,9 +1,28 @@
 package cache
 
 import (
+	"runtime"
 	"sync"
 	"time"
 )
+
+type CreateCall func(key interface{}) (interface{}, bool)
+
+func NewMap(liveDuration time.Duration, maxSize int) *CacheMap {
+	res := &CacheMap{&cacheMap{
+		locker:          new(sync.RWMutex),
+		items:           make(map[interface{}]*cacheMapItem),
+		liveDuration:    liveDuration,
+		maxSize:         maxSize,
+		stopCleanerChan: make(chan struct{}),
+	}}
+	runtime.SetFinalizer(res, destroyCacheMap)
+	return res
+}
+
+type CacheMap struct {
+	*cacheMap
+}
 
 type cacheMapItem struct {
 	value  interface{}
@@ -14,7 +33,7 @@ type cacheMap struct {
 	locker          *sync.RWMutex
 	items           map[interface{}]*cacheMapItem
 	liveDuration    time.Duration
-	maxSize         int64
+	maxSize         int
 	cleanerWork     bool
 	stopCleanerChan chan struct{}
 }
@@ -32,7 +51,13 @@ func (s *cacheMap) runCleaner() {
 						s.delete(key)
 					}
 				}
-				s.locker.RUnlock()
+				if len(s.items) == 0 {
+					s.cleanerWork = false
+					ticker.Stop()
+					s.locker.Unlock()
+					return
+				}
+				s.locker.Unlock()
 			}
 		case <-s.stopCleanerChan:
 			{
@@ -48,6 +73,13 @@ func (s *cacheMap) delete(key interface{}) {
 	delete(s.items, key)
 }
 
+// Delete removes cached object
+func (s *cacheMap) Delete(key interface{}) {
+	s.locker.Lock()
+	s.delete(key)
+	s.locker.Unlock()
+}
+
 func (s *cacheMap) set(key, value interface{}) {
 	s.items[key] = &cacheMapItem{
 		value:  value,
@@ -59,56 +91,41 @@ func (s *cacheMap) set(key, value interface{}) {
 	}
 }
 
-type CreateCall func(key interface{}) (interface{}, bool)
+func (s *cacheMap) Set(key, value interface{}) {
+	s.locker.Lock()
+	s.set(key, value)
+	s.locker.Unlock()
+}
 
-func (s *cacheMap) get(key interface{}, call CreateCall) (res interface{}, check bool) {
+func (s *cacheMap) get(key interface{}) (res interface{}, check bool) {
 	var item *cacheMapItem
-	if item, check = s.items[key]; !check && call != nil {
-		if cVal, cCheck := call(key); cCheck {
-			s.set(key, cVal)
-		}
-	} else {
-		///...
+	if item, check = s.items[key]; check {
+		res = item.value
 	}
 	return
 }
 
 func (s *cacheMap) Get(key interface{}) (res interface{}, check bool) {
 	s.locker.RLock()
-	res, check = s.get(key, cCall)
+	res, check = s.get(key)
 	s.locker.RUnlock()
 	return
 }
 
-func (s *cacheMap) GetOrCreate(key interface{}, CreateMethod) interface{}) (res interface{}, check bool) {
-	if res, check = s.Get(key, cCall); !check {
+func (s *cacheMap) GetOrCreate(key interface{}, createCall CreateCall) (res interface{}, check bool) {
+	if res, check = s.Get(key); !check {
 		s.locker.Lock()
-		if res, check = s.get(key, cCall); check {
+		if res, check = s.get(key); check {
 			s.locker.Unlock()
 			return
 		}
 
-		if key, res, check = createCall(key); check {
+		if res, check = createCall(key); check {
 			s.set(key, res)
 		}
 		s.locker.Unlock()
 	}
 	return
-}
-
-// Delete removes cached object
-func (s *cacheMap) Delete(key interface{}) {
-	s.locker.Lock()
-	s.delete(key)
-	s.locker.Unlock()
-}
-
-// Size returns cache map size
-func (s *cacheMap) Size() (res int) {
-	s.locker.RLock()
-	res = len(s.items)
-	s.locker.RUnlock()
-	return res
 }
 
 // Each implements a map bypass for each key using the callback function. If the callback function returns false, then the cycle stops
@@ -123,7 +140,14 @@ func (s *cacheMap) Each(callback func(interface{}, interface{}) bool) {
 	s.locker.Unlock()
 }
 
+func (s *cacheMap) Len() (res int) {
+	s.locker.RLock()
+	res = len(s.items)
+	s.locker.RUnlock()
+	return
+}
+
 // for garbage collector
-func destroyCacheMap(m *cacheMap) {
+func destroyCacheMap(m *CacheMap) {
 	close(m.stopCleanerChan)
 }
