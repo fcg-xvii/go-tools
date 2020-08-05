@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-type CreateCall func(key interface{}) (interface{}, bool)
+type CallCreate func(key interface{}) (value interface{}, created bool)
+type CallCheck func(key, value interface{}, exists bool) (rKey, rValue interface{}, created bool)
 
 func NewMap(liveDuration time.Duration, maxSize int) *CacheMap {
 	res := &CacheMap{&cacheMap{
@@ -112,7 +113,7 @@ func (s *cacheMap) Get(key interface{}) (res interface{}, check bool) {
 	return
 }
 
-func (s *cacheMap) GetOrCreate(key interface{}, createCall CreateCall) (res interface{}, check bool) {
+func (s *cacheMap) GetOrCreate(key interface{}, mCreate CallCreate) (res interface{}, check bool) {
 	if res, check = s.Get(key); !check {
 		s.locker.Lock()
 		if res, check = s.get(key); check {
@@ -120,11 +121,22 @@ func (s *cacheMap) GetOrCreate(key interface{}, createCall CreateCall) (res inte
 			return
 		}
 
-		if res, check = createCall(key); check {
+		if res, check = mCreate(key); check {
 			s.set(key, res)
 		}
 		s.locker.Unlock()
 	}
+	return
+}
+
+func (s *cacheMap) GetCheck(key interface{}, mCheck CallCheck) (res interface{}, check bool) {
+	s.locker.Lock()
+	res, check = s.get(key)
+	if rKey, rVal, rCheck := mCheck(key, res, check); rCheck {
+		s.set(rKey, rVal)
+		key, res, check = rKey, rVal, true
+	}
+	s.locker.Unlock()
 	return
 }
 
