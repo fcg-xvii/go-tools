@@ -54,3 +54,12 @@ func (_self *NoSQL) Call(function string, data interface{}) (res interface{}, er
 	}
 	return
 }
+
+func (_self *NoSQL) CallObject(function string, data interface{}, resultObject interface{}) (err error) {
+	var resRawJSON []byte
+	if resRawJSON, err = _self.CallObjParam(function, data); err == nil {
+		// convert raw result data to result object
+		err = json.Unmarshal(resRawJSON, resultObject)
+	}
+	return
+}
