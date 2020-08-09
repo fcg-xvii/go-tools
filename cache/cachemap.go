@@ -144,7 +144,7 @@ func (s *cacheMap) GetCheck(key interface{}, mCheck CallCheck) (res interface{},
 func (s *cacheMap) Each(callback func(interface{}, interface{}) bool) {
 	s.locker.RLock()
 	for key, val := range s.items {
-		if !callback(key, val) {
+		if !callback(key, val.value) {
 			s.locker.Unlock()
 			return
 		}
