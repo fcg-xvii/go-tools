@@ -145,11 +145,11 @@ func (s *cacheMap) Each(callback func(interface{}, interface{}) bool) {
 	s.locker.RLock()
 	for key, val := range s.items {
 		if !callback(key, val.value) {
-			s.locker.Unlock()
+			s.locker.RUnlock()
 			return
 		}
 	}
-	s.locker.Unlock()
+	s.locker.RUnlock()
 }
 
 func (s *cacheMap) Len() (res int) {
