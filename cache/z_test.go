@@ -56,4 +56,7 @@ func TestKeys(t *testing.T) {
 		"two": 2,
 	})
 	log.Println(m.Keys())
+	m.Clear()
+	log.Println(m.Keys())
+
 }

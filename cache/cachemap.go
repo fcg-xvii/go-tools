@@ -185,6 +185,12 @@ func (s *cacheMap) Keys() (res []interface{}) {
 	return
 }
 
+func (s *cacheMap) Clear() {
+	s.locker.Lock()
+	s.items = make(map[interface{}]*cacheMapItem)
+	s.locker.Unlock()
+}
+
 // for garbage collector
 func destroyCacheMap(m *CacheMap) {
 	close(m.stopCleanerChan)
