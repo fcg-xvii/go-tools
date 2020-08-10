@@ -106,6 +106,14 @@ func (s *cacheMap) SetMulti(m map[interface{}]interface{}) {
 	s.locker.Unlock()
 }
 
+func (s *CacheMap) DeleteMulti(keys []interface{}) {
+	s.locker.Lock()
+	for _, key := range keys {
+		delete(s.items, key)
+	}
+	s.locker.Unlock()
+}
+
 func (s *cacheMap) get(key interface{}) (res interface{}, check bool) {
 	var item *cacheMapItem
 	if item, check = s.items[key]; check {
