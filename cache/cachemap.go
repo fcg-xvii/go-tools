@@ -98,6 +98,14 @@ func (s *cacheMap) Set(key, value interface{}) {
 	s.locker.Unlock()
 }
 
+func (s *cacheMap) SetMulti(m map[interface{}]interface{}) {
+	s.locker.Lock()
+	for key, val := range m {
+		s.set(key, val)
+	}
+	s.locker.Unlock()
+}
+
 func (s *cacheMap) get(key interface{}) (res interface{}, check bool) {
 	var item *cacheMapItem
 	if item, check = s.items[key]; check {

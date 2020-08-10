@@ -32,4 +32,19 @@ func TestMapCheck(t *testing.T) {
 	log.Println("===================")
 	log.Println(m.Get("key"))
 	log.Println(m.Get("key1"))
+
+}
+
+func TestMapEach(t *testing.T) {
+	m := NewMap(time.Second*5, 10)
+	m.SetMulti(map[interface{}]interface{}{
+		1: "one",
+		2: "two",
+		3: "three",
+	})
+
+	m.Each(func(key, val interface{}) bool {
+		log.Println(key, val)
+		return false
+	})
 }
