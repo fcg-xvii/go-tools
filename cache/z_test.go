@@ -48,3 +48,12 @@ func TestMapEach(t *testing.T) {
 		return false
 	})
 }
+
+func TestKeys(t *testing.T) {
+	m := NewMap(time.Second*5, 20)
+	m.SetMulti(map[interface{}]interface{}{
+		"one": 1,
+		"two": 2,
+	})
+	log.Println(m.Keys())
+}

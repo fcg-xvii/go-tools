@@ -175,6 +175,16 @@ func (s *cacheMap) Len() (res int) {
 	return
 }
 
+func (s *cacheMap) Keys() (res []interface{}) {
+	s.locker.RLock()
+	res = make([]interface{}, 0, len(s.items))
+	for key := range s.items {
+		res = append(res, key)
+	}
+	s.locker.RUnlock()
+	return
+}
+
 // for garbage collector
 func destroyCacheMap(m *CacheMap) {
 	close(m.stopCleanerChan)
