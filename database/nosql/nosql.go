@@ -50,7 +50,9 @@ func (_self *NoSQL) Call(function string, data interface{}) (res interface{}, er
 	var resRawJSON []byte
 	if resRawJSON, err = _self.CallObjParam(function, data); err == nil {
 		// convert raw result data to obj
-		err = json.Unmarshal(resRawJSON, &res)
+		if len(resRawJSON) > 0 {
+			err = json.Unmarshal(resRawJSON, &res)
+		}
 	}
 	return
 }
