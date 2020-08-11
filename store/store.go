@@ -128,3 +128,13 @@ func (s *Store) Clear() {
 	s.items = make(map[interface{}]interface{})
 	s.locker.Unlock()
 }
+
+func (s *Store) Map() (res map[interface{}]interface{}) {
+	res = make(map[interface{}]interface{})
+	s.locker.RLock()
+	for key, val := range s.items {
+		res[key] = val
+	}
+	s.locker.RUnlock()
+	return
+}

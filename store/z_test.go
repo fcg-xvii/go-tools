@@ -22,4 +22,6 @@ func TestStore(t *testing.T) {
 	log.Println(st.GetCreate("two", func(key interface{}) (value interface{}, created bool) {
 		return 30, true
 	}))
+
+	log.Println(st.Map())
 }
