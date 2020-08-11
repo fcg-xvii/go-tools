@@ -2,9 +2,7 @@ package store
 
 import (
 	"log"
-	"reflect"
 	"testing"
-	"unsafe"
 )
 
 func TestStore(t *testing.T) {
@@ -24,8 +22,4 @@ func TestStore(t *testing.T) {
 	log.Println(st.GetCreate("two", func(key interface{}) (value interface{}, created bool) {
 		return 30, true
 	}))
-
-	var i int
-	log.Printf("Size of var (reflect.TypeOf.Size): %d\n", reflect.TypeOf(i).Size())
-	log.Printf("Size of var (unsafe.Sizeof): %d\n", unsafe.Sizeof(i))
 }
