@@ -7,6 +7,13 @@ import (
 type CallCreate func(key interface{}) (value interface{}, created bool)
 type CallCheck func(key, value interface{}, exists bool) (rKey, rValue interface{}, created bool)
 
+func FromMap(m map[interface{}]interface{}) *Store {
+	return &Store{
+		locker: new(sync.RWMutex),
+		items:  m,
+	}
+}
+
 func New() *Store {
 	return &Store{
 		locker: new(sync.RWMutex),

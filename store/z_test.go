@@ -24,4 +24,11 @@ func TestStore(t *testing.T) {
 	}))
 
 	log.Println(st.Map())
+
+	st = FromMap(map[interface{}]interface{}{
+		"one": 1,
+		"two": 2,
+	})
+
+	log.Println(st.Map())
 }
