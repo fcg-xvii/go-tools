@@ -33,6 +33,9 @@ func TestMapCheck(t *testing.T) {
 	log.Println(m.Get("key"))
 	log.Println(m.Get("key1"))
 
+	log.Println(m.GetCreateNew("key", func(key interface{}) (rKey, val interface{}, created bool) {
+		return "oooone", 1000, true
+	}))
 }
 
 func TestMapEach(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 )
 
 type CallCreate func(key interface{}) (value interface{}, created bool)
+type CallCreateNew func(key interface{}) (rKey, value interface{}, created bool)
 type CallCheck func(key, value interface{}, exists bool) (rKey, rValue interface{}, created bool)
 
 func NewMap(liveDuration time.Duration, maxSize int) *CacheMap {
@@ -129,16 +130,33 @@ func (s *cacheMap) Get(key interface{}) (res interface{}, check bool) {
 	return
 }
 
-func (s *cacheMap) GetOrCreate(key interface{}, mCreate CallCreate) (res interface{}, check bool) {
-	if res, check = s.Get(key); !check {
+func (s *cacheMap) GetCreate(key interface{}, mCreate CallCreate) (val interface{}, check bool) {
+	if val, check = s.Get(key); !check {
 		s.locker.Lock()
-		if res, check = s.get(key); check {
+		if val, check = s.get(key); check {
 			s.locker.Unlock()
 			return
 		}
 
-		if res, check = mCreate(key); check {
-			s.set(key, res)
+		if val, check = mCreate(key); check {
+			s.set(key, val)
+		}
+		s.locker.Unlock()
+	}
+	return
+}
+
+func (s *cacheMap) GetCreateNew(key interface{}, mCreateNew CallCreateNew) (rKey, val interface{}, check bool) {
+	rKey = key
+	if val, check = s.Get(key); !check {
+		s.locker.Lock()
+		if val, check = s.get(key); check {
+			s.locker.Unlock()
+			return
+		}
+
+		if rKey, val, check = mCreateNew(key); check {
+			s.set(rKey, val)
 		}
 		s.locker.Unlock()
 	}
