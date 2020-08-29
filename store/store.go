@@ -5,6 +5,7 @@ import (
 )
 
 type CallCreate func(key interface{}) (value interface{}, created bool)
+type CallCreateMulti func(key interface{}) (m map[interface{}]interface{}, created bool)
 type CallCheck func(key, value interface{}, exists bool) (rKey, rValue interface{}, created bool)
 
 func FromMap(m map[interface{}]interface{}) *Store {
@@ -48,6 +49,12 @@ func (s *Store) set(key, val interface{}) {
 	s.items[key] = val
 }
 
+func (s *Store) setMulti(m map[interface{}]interface{}) {
+	for key, val := range m {
+		s.items[key] = val
+	}
+}
+
 func (s *Store) Set(key, val interface{}) {
 	s.locker.Lock()
 	s.set(key, val)
@@ -56,9 +63,7 @@ func (s *Store) Set(key, val interface{}) {
 
 func (s *Store) SetMulti(m map[interface{}]interface{}) {
 	s.locker.Lock()
-	for key, val := range m {
-		s.set(key, val)
-	}
+	s.setMulti(m)
 	s.locker.Unlock()
 }
 
@@ -84,6 +89,24 @@ func (s *Store) GetCreate(key interface{}, mCreate CallCreate) (res interface{},
 
 		if res, check = mCreate(key); check {
 			s.set(key, res)
+		}
+		s.locker.Unlock()
+	}
+	return
+}
+
+func (s *Store) GetCreateMulti(key interface{}, mCreateMulti CallCreateMulti) (res interface{}, check bool) {
+	if res, check = s.Get(key); !check {
+		s.locker.Lock()
+		if res, check = s.get(key); check {
+			s.locker.Unlock()
+			return
+		}
+
+		var m map[interface{}]interface{}
+		if m, check = mCreateMulti(key); check {
+			s.setMulti(m)
+			res, check = s.items[key]
 		}
 		s.locker.Unlock()
 	}

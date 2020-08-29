@@ -3,6 +3,7 @@ package store
 import "sync"
 
 type StringCallCreate func(key string) (value interface{}, created bool)
+type StringCallCreateMulti func(key string) (map[string]interface{}, bool)
 type StringCallCheck func(key string, value interface{}, exists bool) (rKey string, rValue interface{}, created bool)
 
 func StringFromMap(m map[string]interface{}) *StoreString {
@@ -46,6 +47,12 @@ func (s *StoreString) set(key string, val interface{}) {
 	s.items[key] = val
 }
 
+func (s *StoreString) setMulti(m map[string]interface{}) {
+	for key, val := range m {
+		s.set(key, val)
+	}
+}
+
 func (s *StoreString) Set(key string, val interface{}) {
 	s.locker.Lock()
 	s.set(key, val)
@@ -54,9 +61,7 @@ func (s *StoreString) Set(key string, val interface{}) {
 
 func (s *StoreString) SetMulti(m map[string]interface{}) {
 	s.locker.Lock()
-	for key, val := range m {
-		s.set(key, val)
-	}
+	s.setMulti(m)
 	s.locker.Unlock()
 }
 
@@ -82,6 +87,24 @@ func (s *StoreString) GetCreate(key string, mCreate StringCallCreate) (res inter
 
 		if res, check = mCreate(key); check {
 			s.set(key, res)
+		}
+		s.locker.Unlock()
+	}
+	return
+}
+
+func (s *StoreString) GetCreateMulti(key string, mCreateMulti StringCallCreateMulti) (res interface{}, check bool) {
+	if res, check = s.Get(key); !check {
+		s.locker.Lock()
+		if res, check = s.get(key); check {
+			s.locker.Unlock()
+			return
+		}
+
+		var m map[string]interface{}
+		if m, check = mCreateMulti(key); check {
+			s.setMulti(m)
+			res, check = s.items[key]
 		}
 		s.locker.Unlock()
 	}

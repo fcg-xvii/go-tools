@@ -59,4 +59,15 @@ func TestStoreString(t *testing.T) {
 	})
 
 	log.Println(st.Map())
+
+	val, check := st.GetCreateMulti("key1", func(string) (map[string]interface{}, bool) {
+		return map[string]interface{}{
+			"key100": 100,
+			"key2":   200,
+		}, true
+	})
+
+	log.Println(val, check)
+	log.Println("==================")
+	log.Println(st.items)
 }
