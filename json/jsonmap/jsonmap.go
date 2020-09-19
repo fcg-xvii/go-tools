@@ -177,3 +177,12 @@ func (s JSONMap) JSON() (res []byte) {
 
 // ToMap returns map[string]interface{} of the self object
 func (s JSONMap) ToMap() map[string]interface{} { return map[string]interface{}(s) }
+
+// Copy returns copied map
+func (s JSONMap) Copy() (res JSONMap) {
+	res = make(JSONMap)
+	for key, val := range s {
+		res[key] = val
+	}
+	return
+}
