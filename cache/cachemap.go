@@ -16,7 +16,7 @@ func NewMap(liveDuration time.Duration, maxSize int) *CacheMap {
 		items:           make(map[interface{}]*cacheMapItem),
 		liveDuration:    liveDuration,
 		maxSize:         maxSize,
-		stopCleanerChan: make(chan struct{}),
+		stopCleanerChan: make(chan byte),
 	}}
 	runtime.SetFinalizer(res, destroyCacheMap)
 	return res
@@ -32,12 +32,23 @@ type cacheMapItem struct {
 }
 
 type cacheMap struct {
-	locker          *sync.RWMutex
-	items           map[interface{}]*cacheMapItem
-	liveDuration    time.Duration
-	maxSize         int
-	cleanerWork     bool
-	stopCleanerChan chan struct{}
+	locker           *sync.RWMutex
+	items            map[interface{}]*cacheMapItem
+	liveDuration     time.Duration
+	maxSize          int
+	cleanerWork      bool
+	stopCleanerChan  chan byte
+	cleanedEventChan chan map[interface{}]interface{}
+}
+
+func (s *cacheMap) CleanEvent() (eventChan <-chan map[interface{}]interface{}) {
+	s.locker.Lock()
+	if s.cleanedEventChan == nil {
+		s.cleanedEventChan = make(chan map[interface{}]interface{})
+	}
+	eventChan = s.cleanedEventChan
+	s.locker.Unlock()
+	return
 }
 
 func (s *cacheMap) runCleaner() {
@@ -48,10 +59,15 @@ func (s *cacheMap) runCleaner() {
 			{
 				now := time.Now().UnixNano()
 				s.locker.Lock()
+				cleaned := make(map[interface{}]interface{})
 				for key, val := range s.items {
 					if now > val.expire {
-						s.delete(key)
+						cleaned[key] = val.value
+						delete(s.items, key)
 					}
+				}
+				if len(cleaned) > 0 {
+					s.cleanedEventChan <- cleaned
 				}
 				if len(s.items) == 0 {
 					s.cleanerWork = false
@@ -73,6 +89,9 @@ func (s *cacheMap) runCleaner() {
 
 func (s *cacheMap) delete(key interface{}) {
 	delete(s.items, key)
+	if len(s.items) == 0 && s.cleanerWork {
+		s.stopCleanerChan <- 0
+	}
 }
 
 // Delete removes cached object
@@ -212,4 +231,5 @@ func (s *cacheMap) Clear() {
 // for garbage collector
 func destroyCacheMap(m *CacheMap) {
 	close(m.stopCleanerChan)
+	close(m.cleanedEventChan)
 }

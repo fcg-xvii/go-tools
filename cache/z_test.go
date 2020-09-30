@@ -15,6 +15,18 @@ func TestMap(t *testing.T) {
 	m.Delete("key")
 	log.Println(m.Get("key"))
 	log.Println(m.Get("key1"))
+
+	go func() {
+		for e := range m.CleanEvent() {
+			log.Println("CLEANED", e)
+		}
+	}()
+
+	for {
+		time.Sleep(time.Second * 10)
+		m.Set("key", "oneee")
+
+	}
 }
 
 func TestMapCheck(t *testing.T) {
