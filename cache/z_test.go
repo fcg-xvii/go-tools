@@ -22,7 +22,7 @@ func TestMap(t *testing.T) {
 		}
 	}()
 
-	for {
+	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second * 10)
 		m.Set("key", "oneee")
 
