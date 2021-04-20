@@ -161,12 +161,22 @@ func (s JSONMap) StringSlice(key string, defaultVal []string) (res []string) {
 // JSONMap returns JSONMap object by key
 // If key isn't defined or have other type will be returned defaultVal arg value
 func (s JSONMap) JSONMap(key string, defaultVal JSONMap) (res JSONMap) {
-	if m, check := s[key].(map[string]interface{}); check {
+	val := s[key]
+	switch val.(type) {
+	case JSONMap:
+		res = val.(JSONMap)
+	case map[string]interface{}:
+		res = JSONMap(val.(map[string]interface{}))
+	default:
+		res = defaultVal
+	}
+	return
+	/*if m, check := s[key].(map[string]interface{}); check {
 		res = JSONMap(m)
 	} else {
 		res = defaultVal
 	}
-	return
+	return*/
 }
 
 // JSON Return JSON source of the self object
