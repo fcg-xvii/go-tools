@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fcg-xvii/go-tools/json/jsonmap"
+	_ "github.com/fcg-xvii/go-tools/json/jsonmap"
 	"github.com/fcg-xvii/go-tools/text/config"
 )
 
@@ -46,15 +46,24 @@ func TestClient(t *testing.T) {
 
 	go cl.Start()
 
-	//req := InitRequest("Originate")
-	//req.SetParam("Channel", "sip/777")
-	//req.SetParam("Context", "from-test")
-	//req.SetParam("Async", "yes")
-	//req.SetVariable("one", "1")
-	//req.SetVariable("two", "2")
+	for {
+	req := InitRequest("Originate")
+	req.SetParam("Channel", "sip/user1")
+	req.SetParam("Context", "from-internal")
+	req.SetParam("Priority", "1")
+	req.SetParam("Exten", "89857770038")
+	req.SetVariable("one", "1")
+	req.SetVariable("two", "2")
 
-	//resp, accepted := cl.Request(req, 0)
-
+	resp, accepted := cl.Request(req, 0)
+	log.Println(resp, accepted)
+	log.Println(resp.ActionData)
+	go func() {
+		
+	}
+	time.Sleep(time.Minute)
+	}
+	/*
 	if originate, err := cl.Originate(&OriginateRequest{
 		Channel:  "sip/101",
 		Priority: "1",
@@ -77,7 +86,7 @@ func TestClient(t *testing.T) {
 		}
 	} else {
 		t.Fatal(err)
-	}
+	}*/
 
 	//log.Println("ORIGINATE", originate, err)
 
