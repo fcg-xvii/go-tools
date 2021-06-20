@@ -33,7 +33,7 @@ func TestClient(t *testing.T) {
 			{
 				time.Sleep(time.Second * 5)
 				log.Println("Reconnect...")
-				go cl.Start()
+				//go cl.Start()
 			}
 		}
 	})
@@ -42,9 +42,9 @@ func TestClient(t *testing.T) {
 	for {
 		log.Println("Originate...")
 		rOrig := &OriginateRequest{
-			Channel: "sip/user1",
-			Context: "from-internal",
-			Exten:   "89857770038",
+			Channel: "SIP/user1/89774708408",
+			Context: "admefine-bot",
+			Exten:   "s",
 		}
 		originate, err := cl.Originate(rOrig)
 		if err != nil {
@@ -57,5 +57,6 @@ func TestClient(t *testing.T) {
 		}
 		log.Println("Call finished...")
 		//time.Sleep(time.Second * 5)
+		cl.Close()
 	}
 }

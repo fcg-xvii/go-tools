@@ -3,6 +3,7 @@ package ami
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -109,9 +110,10 @@ func (s *Originate) listenEvents() {
 				reasonVal, _ := strconv.ParseInt(reason, 10, 32)
 				s.responseReason = byte(reasonVal)
 			}
-			if s.responseReason != 4 {
-				s.client.removeEventListener(s.uuid)
-			}
+			log.Println("RREASON", s.responseReason)
+			//if s.responseReason != 4 {
+			//s.client.removeEventListener(s.uuid)
+			//}
 		case "Hangup":
 			if cause, check := e.ActionData["Cause"]; check {
 				causeVal, _ := strconv.ParseInt(cause, 10, 32)
