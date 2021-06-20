@@ -37,89 +37,25 @@ func TestClient(t *testing.T) {
 			}
 		}
 	})
-
-	/*go func() {
-		for e := range cl.Event() {
-			log.Println("EVENT", e.Name(), "***", e.ActionData["Uniqueid"], "======", e)
-		}
-	}()*/
-
 	go cl.Start()
 
 	for {
-	req := InitRequest("Originate")
-	req.SetParam("Channel", "sip/user1")
-	req.SetParam("Context", "from-internal")
-	req.SetParam("Priority", "1")
-	req.SetParam("Exten", "89857770038")
-	req.SetVariable("one", "1")
-	req.SetVariable("two", "2")
-
-	resp, accepted := cl.Request(req, 0)
-	log.Println(resp, accepted)
-	log.Println(resp.ActionData)
-	go func() {
-		
-	}
-	time.Sleep(time.Minute)
-	}
-	/*
-	if originate, err := cl.Originate(&OriginateRequest{
-		Channel:  "sip/101",
-		Priority: "1",
-		Exten:    "s",
-		Context:  "manager-call-test-no-record",
-		CallerID: "101",
-		Timeout:  time.Second * 15,
-		Variable: jsonmap.JSONMap{
-			"manager_sip": "SIP/777",
-		},
-	}); err == nil {
-		ech := originate.Events()
-		for {
-			e, ok := <-ech
-			if !ok {
-				log.Println("FINISHED")
-				return
-			}
-			log.Println("CEVENT", e.Name(), e)
+		log.Println("Originate...")
+		rOrig := &OriginateRequest{
+			Channel: "sip/user1",
+			Context: "from-internal",
+			Exten:   "89857770038",
 		}
-	} else {
-		t.Fatal(err)
-	}*/
-
-	//log.Println("ORIGINATE", originate, err)
-
-	/*cl.Originate(&OriginateRequest{
-		Channel:  "sip/101",
-		Priority: "1",
-		Exten:    "s",
-		Context:  "call-test",
-		Async:    true,
-	})*/
-
-	/*cl.Originate(&OriginateRequest{
-		Channel:  "sip/777",
-		Priority: "1",
-		Exten:    "s",
-		Context:  "call-test",
-		Async:    true,
-		CallerID: "Test-Caller",
-		ActionID: "Test-Action",
-	})*/
-
-	/*cl.Originate(&OriginateRequest{
-		Channel:  "sip/101",
-		Context:  "call-test",
-		Async:    true,
-		CallerID: "Test-Caller",
-		ActionID: "Test-Action",
-	})*/
-
-	//log.Println("RESP!!!!!!!!!!!!!!!!!!!!!!!!!", resp, accepted)
-
-	//log.Println(resp, err)
-
-	//time.Sleep(time.Second * 300)
-	//cl.Close()
+		originate, err := cl.Originate(rOrig)
+		if err != nil {
+			log.Println("Originate error", err)
+			continue
+		}
+		log.Println("Call start")
+		for event := range originate.Events() {
+			log.Println(event)
+		}
+		log.Println("Call finished...")
+		//time.Sleep(time.Second * 5)
+	}
 }
