@@ -96,6 +96,10 @@ type client struct {
 	locker          *sync.RWMutex
 }
 
+func (s *client) State() State {
+	return s.state
+}
+
 func (s *client) removeEventListener(uuid int64) {
 	s.locker.Lock()
 	if listener, check := s.eventListeners[uuid]; check {
