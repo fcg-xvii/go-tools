@@ -12,8 +12,8 @@ import (
 )
 
 func (s *Client) Originate(req *OriginateRequest) (*Originate, error) {
-	if s.state != StateConnected {
-		return nil, errors.New("AMI IS NOT CONNECTED")
+	if s.state != StateAuth {
+		return nil, errors.New("AMI IS NOT AUTH")
 	}
 	req.uuid = time.Now().UnixNano()
 	timeout := RequestTimeoutDefault
