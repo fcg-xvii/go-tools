@@ -16,6 +16,19 @@ func New() JSONMap {
 	return make(JSONMap)
 }
 
+// FromInterface convert map[string]interface{} or JSONMap interface to JSONMap
+func FromInterface(iface interface{}) (res JSONMap) {
+	switch iface.(type) {
+	case map[string]interface{}:
+		res = FromMap(iface.(map[string]interface{}))
+	case JSONMap:
+		res = iface.(JSONMap)
+	default:
+		res = New()
+	}
+	return
+}
+
 // FromMap convert map[string]interface{} to JSONMap object
 func FromMap(m map[string]interface{}) JSONMap {
 	return JSONMap(m)

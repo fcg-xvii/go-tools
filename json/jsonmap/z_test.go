@@ -1,6 +1,7 @@
 package jsonmap
 
 import (
+	"log"
 	"testing"
 )
 
@@ -16,4 +17,9 @@ func TestJSON(t *testing.T) {
 	t.Log(string(m.ValueJSON("jsrc1", []byte("{ }"))))
 	t.Log(m.JSONMap("m1", JSONMap{}))
 	t.Log(m.JSONMap("m2", JSONMap{}))
+}
+
+func TestInterface(t *testing.T) {
+	m := FromInterface(JSONMap{"one": 1})
+	log.Println(m)
 }
