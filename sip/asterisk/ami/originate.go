@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fcg-xvii/go-tools/json/jsonmap"
+	"github.com/fcg-xvii/go-tools/json"
 )
 
 func (s *Client) Originate(req *OriginateRequest) (*Originate, error) {
@@ -43,7 +43,7 @@ type OriginateRequest struct {
 	Priority    string
 	Timeout     time.Duration
 	CallerID    string
-	Variable    jsonmap.JSONMap
+	Variable    json.Map
 	Account     string
 	Application string
 	Data        string

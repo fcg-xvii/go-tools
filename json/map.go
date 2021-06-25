@@ -1,5 +1,4 @@
-// Package jsonmap for quickly get typed value from map[string]interface{} object
-package jsonmap
+package json
 
 import (
 	"encoding/json"
@@ -8,34 +7,34 @@ import (
 	"strconv"
 )
 
-// JSONMap type
-type JSONMap map[string]interface{}
+// Map type
+type Map map[string]interface{}
 
-// New init JSONMap object
-func New() JSONMap {
-	return make(JSONMap)
+// New init Map object
+func NewMap() Map {
+	return make(Map)
 }
 
-// FromInterface convert map[string]interface{} or JSONMap interface to JSONMap
-func FromInterface(iface interface{}) (res JSONMap) {
+// FromInterface convert map[string]interface{} or Map interface to Map
+func MapFromInterface(iface interface{}) (res Map) {
 	switch iface.(type) {
 	case map[string]interface{}:
 		res = FromMap(iface.(map[string]interface{}))
-	case JSONMap:
-		res = iface.(JSONMap)
+	case Map:
+		res = iface.(Map)
 	default:
-		res = New()
+		res = NewMap()
 	}
 	return
 }
 
-// FromMap convert map[string]interface{} to JSONMap object
-func FromMap(m map[string]interface{}) JSONMap {
-	return JSONMap(m)
+// FromMap convert map[string]interface{} to Map object
+func FromMap(m map[string]interface{}) Map {
+	return Map(m)
 }
 
 // Bool returns bool value by key
-func (s JSONMap) Bool(key string, defaultVal bool) bool {
+func (s Map) Bool(key string, defaultVal bool) bool {
 	if res, check := s[key].(bool); check {
 		return res
 	}
@@ -43,7 +42,7 @@ func (s JSONMap) Bool(key string, defaultVal bool) bool {
 }
 
 // KeyExists check value exists by key
-func (s JSONMap) KeyExists(key string) bool {
+func (s Map) KeyExists(key string) bool {
 	_, check := s[key]
 	return check
 }
@@ -51,7 +50,7 @@ func (s JSONMap) KeyExists(key string) bool {
 // KeysExists check values exists by keys list.
 // Returns the first blank key found.
 // If all keys are defined, an empty string will be returned
-func (s JSONMap) KeysExists(keys []string) string {
+func (s Map) KeysExists(keys []string) string {
 	for _, key := range keys {
 		if _, check := s[key]; !check {
 			return key
@@ -62,7 +61,7 @@ func (s JSONMap) KeysExists(keys []string) string {
 
 // Int returns int64 value by key.
 // If key isn't defined will be returned defaultVal arg value
-func (s JSONMap) Int(key string, defaultVal int64) int64 {
+func (s Map) Int(key string, defaultVal int64) int64 {
 	if iface, check := s[key]; check {
 		rVal := reflect.ValueOf(iface)
 		switch rVal.Kind() {
@@ -75,13 +74,13 @@ func (s JSONMap) Int(key string, defaultVal int64) int64 {
 	return defaultVal
 }
 
-func (s JSONMap) Int32(key string, defaultVal int) int {
+func (s Map) Int32(key string, defaultVal int) int {
 	return int(s.Int(key, int64(defaultVal)))
 }
 
 // Value returns interface object with attempt to convert to defaultVal type.
 // If key isn't defined will be returned defaultVal arg value
-func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
+func (s Map) Value(key string, defaultVal interface{}) interface{} {
 
 	// check value exists by key
 	if iface, check := s[key]; check {
@@ -131,7 +130,7 @@ func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
 
 // ValueJSON returns json source object by key
 // If key isn't defined will be returned defaultVal arg value
-func (s JSONMap) ValueJSON(key string, defaultVal []byte) (res []byte) {
+func (s Map) ValueJSON(key string, defaultVal []byte) (res []byte) {
 	res = defaultVal
 	if s.KeyExists(key) {
 		if r, err := json.Marshal(s[key]); err == nil {
@@ -143,7 +142,7 @@ func (s JSONMap) ValueJSON(key string, defaultVal []byte) (res []byte) {
 
 // String returns string value by key
 // If key isn't defined will be returned defaultVal arg value
-func (s JSONMap) String(key, defaultVal string) string {
+func (s Map) String(key, defaultVal string) string {
 	if iface, check := s[key]; check {
 		return fmt.Sprint(iface)
 	}
@@ -152,7 +151,7 @@ func (s JSONMap) String(key, defaultVal string) string {
 
 // Slce returns slice of interface{} by key
 // If key isn't defined or have a different type will be returned defaultVal arg value
-func (s JSONMap) Slice(key string, defaultVal []interface{}) (res []interface{}) {
+func (s Map) Slice(key string, defaultVal []interface{}) (res []interface{}) {
 	if arr, check := s[key].([]interface{}); check {
 		res = arr
 	} else {
@@ -163,7 +162,7 @@ func (s JSONMap) Slice(key string, defaultVal []interface{}) (res []interface{})
 
 // StringSlice returns string slice by key
 // If key isn't defined will be returned defaultVal arg value
-func (s JSONMap) StringSlice(key string, defaultVal []string) (res []string) {
+func (s Map) StringSlice(key string, defaultVal []string) (res []string) {
 	if arr, check := s[key].([]interface{}); check {
 		res = make([]string, len(arr))
 		for i, v := range arr {
@@ -175,21 +174,21 @@ func (s JSONMap) StringSlice(key string, defaultVal []string) (res []string) {
 	return
 }
 
-// JSONMap returns JSONMap object by key
+// Map returns Map object by key
 // If key isn't defined or have other type will be returned defaultVal arg value
-func (s JSONMap) JSONMap(key string, defaultVal JSONMap) (res JSONMap) {
+func (s Map) Map(key string, defaultVal Map) (res Map) {
 	val := s[key]
 	switch val.(type) {
-	case JSONMap:
-		res = val.(JSONMap)
+	case Map:
+		res = val.(Map)
 	case map[string]interface{}:
-		res = JSONMap(val.(map[string]interface{}))
+		res = Map(val.(map[string]interface{}))
 	default:
 		res = defaultVal
 	}
 	return
 	/*if m, check := s[key].(map[string]interface{}); check {
-		res = JSONMap(m)
+		res = Map(m)
 	} else {
 		res = defaultVal
 	}
@@ -197,23 +196,23 @@ func (s JSONMap) JSONMap(key string, defaultVal JSONMap) (res JSONMap) {
 }
 
 // JSON Return JSON source of the self object
-func (s JSONMap) JSON() (res []byte) {
+func (s Map) JSON() (res []byte) {
 	res, _ = json.Marshal(s)
 	return
 }
 
 // ToMap returns map[string]interface{} of the self object
-func (s JSONMap) ToMap() map[string]interface{} { return map[string]interface{}(s) }
+func (s Map) ToMap() map[string]interface{} { return map[string]interface{}(s) }
 
 // Copy returns copied map (todo dipcopy)
-func (s JSONMap) Copy() (res JSONMap) {
-	res = make(JSONMap)
+func (s Map) Copy() (res Map) {
+	res = make(Map)
 	for key, val := range s {
 		res[key] = val
 	}
 	return
 }
 
-func (s JSONMap) IsEmpty() bool {
+func (s Map) IsEmpty() bool {
 	return len(s) == 0
 }

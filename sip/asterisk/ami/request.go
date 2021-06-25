@@ -3,6 +3,7 @@ package ami
 import (
 	"fmt"
 
+	"github.com/fcg-xvii/go-tools/json"
 	"github.com/fcg-xvii/go-tools/json/jsonmap"
 )
 
@@ -16,7 +17,7 @@ func InitRequest(action string) Request {
 
 type Request struct {
 	ActionData
-	Variables    jsonmap.JSONMap
+	Variables    json.Map
 	chanResponse chan Response
 	sended       bool
 }
@@ -29,14 +30,14 @@ func (s *Request) SetParam(key, value string) {
 
 func (s *Request) SetVariable(key, value string) {
 	if s.Variables == nil {
-		s.Variables = make(jsonmap.JSONMap)
+		s.Variables = 
 	}
 	s.Variables[key] = value
 }
 
-func (s *Request) SetVariables(m jsonmap.JSONMap) {
+func (s *Request) SetVariables(m json.Map) {
 	if s.Variables == nil {
-		s.Variables = make(jsonmap.JSONMap)
+		s.Variables = json.NewMap()
 	}
 	for key, val := range m {
 		s.Variables[key] = val
