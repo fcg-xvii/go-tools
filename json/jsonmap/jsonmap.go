@@ -214,6 +214,6 @@ func (s JSONMap) Copy() (res JSONMap) {
 	return
 }
 
-func (s JSONMap) IsEmpty(res JSONMap) bool {
+func (s JSONMap) IsEmpty() bool {
 	return len(s) == 0
 }
