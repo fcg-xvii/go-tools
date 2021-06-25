@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/fcg-xvii/go-tools/json/jsonmap"
 	"github.com/fcg-xvii/go-tools/text/config"
 )
 

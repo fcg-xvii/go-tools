@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/fcg-xvii/go-tools/json"
-	"github.com/fcg-xvii/go-tools/json/jsonmap"
 )
 
 func InitRequest(action string) Request {
@@ -30,7 +29,7 @@ func (s *Request) SetParam(key, value string) {
 
 func (s *Request) SetVariable(key, value string) {
 	if s.Variables == nil {
-		s.Variables = 
+		s.Variables = json.NewMap()
 	}
 	s.Variables[key] = value
 }
