@@ -75,6 +75,10 @@ func (s JSONMap) Int(key string, defaultVal int64) int64 {
 	return defaultVal
 }
 
+func (s JSONMap) Int32(key string, defaultVal int) int {
+	return int(s.Int(key, int64(defaultVal)))
+}
+
 // Value returns interface object with attempt to convert to defaultVal type.
 // If key isn't defined will be returned defaultVal arg value
 func (s JSONMap) Value(key string, defaultVal interface{}) interface{} {
@@ -208,4 +212,8 @@ func (s JSONMap) Copy() (res JSONMap) {
 		res[key] = val
 	}
 	return
+}
+
+func (s JSONMap) IsEmpty(res JSONMap) bool {
+	return len(s) == 0
 }
