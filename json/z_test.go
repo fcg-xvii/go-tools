@@ -2,6 +2,7 @@ package json
 
 import (
 	"log"
+	"os"
 	"testing"
 )
 
@@ -22,4 +23,52 @@ func TestJSON(t *testing.T) {
 func TestInterface(t *testing.T) {
 	m := MapFromInterface(Map{"one": 1})
 	log.Println(m)
+}
+
+type TObject struct {
+	id       int
+	name     string
+	embedded *TObject
+}
+
+func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
+	return dec.DecodeObject(func(field string) (ptr interface{}, err error) {
+		log.Println("<<<<<<<<<", field)
+		switch field {
+		case "id":
+			ptr = &s.id
+		case "name":
+			ptr = &s.name
+		case "embedded":
+			ptr = &s.embedded
+		}
+		return
+	})
+}
+
+func TestDecoder(t *testing.T) {
+	// object
+	fObj, err := os.Open("test_object.json")
+	if err != nil {
+		t.Error(err)
+	}
+
+	var obj TObject
+	if err := Decode(fObj, &obj); err != nil {
+		t.Error(err)
+	}
+	fObj.Close()
+	log.Println("OBJ", obj, obj.embedded)
+	// slice
+	fObj, err = os.Open("test_array.json")
+	if err != nil {
+		t.Error(err)
+	}
+
+	var arr []*TObject
+	if err := Decode(fObj, &arr); err != nil {
+		t.Error(err)
+	}
+	fObj.Close()
+	log.Println("ARR", arr)
 }
