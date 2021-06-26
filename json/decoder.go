@@ -154,7 +154,7 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {
 		return err
 	}
 	if s.current != JSON_ARRAY {
-		return fmt.Errorf("Expected array, not %T", s.current)
+		return fmt.Errorf("EXPECTED ARRAY, NOT %T", s.current)
 	}
 	elemType := reflect.TypeOf(sl.Interface()).Elem()
 	for s.More() {
@@ -178,10 +178,12 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {
 			sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Elem()))
 		}
 	}
-	if _, err := s.Token(); err == nil {
-		if d, check := s.token.(json.Delim); !check || d != ']' {
-			err = fmt.Errorf("JSON parse error :: expected ']', not %v", d)
-		}
+	_, err := s.Token()
+	if err != nil {
+		return err
+	}
+	if d, check := s.token.(json.Delim); !check || d != ']' {
+		return fmt.Errorf("JSON PARSE ERROR :: EXPECTED ']', NOT %v", d)
 	}
 	return nil
 }
@@ -191,7 +193,7 @@ func (s *JSONDecoder) DecodeObject(fieldRequest func(string) (interface{}, error
 		return err
 	}
 	if s.current != JSON_OBJECT {
-		return fmt.Errorf("Expected object, not %T", s.current)
+		return fmt.Errorf("EXPCTED OBJECT, NOT %T", s.current)
 	}
 	el := s.EmbeddedLevel()
 	for el <= s.EmbeddedLevel() {

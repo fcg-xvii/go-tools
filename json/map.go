@@ -17,11 +17,11 @@ func NewMap() Map {
 
 // FromInterface convert map[string]interface{} or Map interface to Map
 func MapFromInterface(iface interface{}) (res Map) {
-	switch iface.(type) {
+	switch val := iface.(type) {
 	case map[string]interface{}:
-		res = FromMap(iface.(map[string]interface{}))
+		res = FromMap(val)
 	case Map:
-		res = iface.(Map)
+		res = val
 	default:
 		res = NewMap()
 	}
@@ -178,21 +178,15 @@ func (s Map) StringSlice(key string, defaultVal []string) (res []string) {
 // If key isn't defined or have other type will be returned defaultVal arg value
 func (s Map) Map(key string, defaultVal Map) (res Map) {
 	val := s[key]
-	switch val.(type) {
+	switch iface := val.(type) {
 	case Map:
-		res = val.(Map)
+		res = iface
 	case map[string]interface{}:
-		res = Map(val.(map[string]interface{}))
+		res = Map(iface)
 	default:
 		res = defaultVal
 	}
 	return
-	/*if m, check := s[key].(map[string]interface{}); check {
-		res = Map(m)
-	} else {
-		res = defaultVal
-	}
-	return*/
 }
 
 // JSON Return JSON source of the self object
