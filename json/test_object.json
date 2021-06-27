@@ -3,6 +3,7 @@
     "name": "Test JSON object",
     "embedded": {
         "id": 2,
-        "name": "Test embedded object"
+        "name": "Test embedded object",
+        "embedded": null
     }
 }

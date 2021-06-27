@@ -68,6 +68,7 @@ type JSONDecoder struct {
 	current      JSONTokenType
 	objectkey    bool
 	objectClosed bool
+	parentObj    reflect.Value
 }
 
 func (s *JSONDecoder) IsObjectKey() bool      { return s.objectkey }
@@ -137,6 +138,7 @@ func (s *JSONDecoder) Decode(v interface{}) error {
 			rVal.Set(reflect.New(rVal.Type().Elem()))
 			v = rVal.Elem().Addr().Interface()
 		}
+		s.parentObj = rVal
 	}
 	if rVal.Kind() == reflect.Slice {
 		return s.decodeSlice(&rVal)
@@ -154,7 +156,15 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {
 		return err
 	}
 	if s.current != JSON_ARRAY {
-		return fmt.Errorf("EXPECTED ARRAY, NOT %T", s.current)
+		if s.token == nil {
+			if s.parentObj.IsValid() {
+				s.parentObj.Set(reflect.Zero(s.parentObj.Type()))
+				s.parentObj = reflect.Value{}
+			}
+			return nil
+		} else {
+			return fmt.Errorf("EXPECTED ARRAY, NOT %T", s.current)
+		}
 	}
 	elemType := reflect.TypeOf(sl.Interface()).Elem()
 	for s.More() {
@@ -167,15 +177,18 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {
 		} else {
 			rElem = reflect.New(elemType)
 		}
-
 		rRes := rElem.Interface()
-		if err := s.Decode(rRes); err != nil {
+		if err := s.Decode(&rRes); err != nil {
 			return err
 		}
-		if elemType.Kind() == reflect.Ptr {
-			sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Convert(elemType)))
+		if rRes == nil {
+			sl.Set(reflect.Append(*sl, reflect.Zero(elemType)))
 		} else {
-			sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Elem()))
+			if elemType.Kind() == reflect.Ptr {
+				sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Convert(elemType)))
+			} else {
+				sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Elem()))
+			}
 		}
 	}
 	_, err := s.Token()
@@ -193,7 +206,15 @@ func (s *JSONDecoder) DecodeObject(fieldRequest func(string) (interface{}, error
 		return err
 	}
 	if s.current != JSON_OBJECT {
-		return fmt.Errorf("EXPCTED OBJECT, NOT %T", s.current)
+		if s.token == nil {
+			if s.parentObj.IsValid() {
+				s.parentObj.Set(reflect.Zero(s.parentObj.Type()))
+				s.parentObj = reflect.Value{}
+			}
+			return nil
+		} else {
+			return fmt.Errorf("EXPCTED OBJECT, NOT %T", s.current)
+		}
 	}
 	el := s.EmbeddedLevel()
 	for el <= s.EmbeddedLevel() {

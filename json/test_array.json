@@ -1,18 +1,11 @@
 [ 
     {
         "id": 1,
-        "name": "Test JSON object",
-        "embedded": {
-            "id": 2,
-            "name": "Test embedded object"
-        }
+        "name": "Test JSON object"
     },
     {
         "id": 100,
-        "name": "Test JSON object",
-        "embedded": {
-            "id": 2,
-            "name": "Test embedded object"
-        }
-    }
+        "name": "Test JSON object"
+    },
+    null
 ]
