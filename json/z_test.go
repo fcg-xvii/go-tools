@@ -59,6 +59,7 @@ type TObject struct {
 }
 
 func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
+	log.Println("DECODE_TOBJECT")
 	return dec.DecodeObject(func(field string) (ptr interface{}, err error) {
 		log.Println("<<<<<<<<<", field)
 		switch field {

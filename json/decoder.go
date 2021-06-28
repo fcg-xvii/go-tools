@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"reflect"
 
 	"github.com/fcg-xvii/go-tools/containers"
@@ -141,8 +142,10 @@ func (s *JSONDecoder) Decode(v interface{}) error {
 		s.parentObj = rVal
 	}
 	if jsonObj, check := v.(JSONObject); check {
+		log.Println("+++")
 		return jsonObj.DecodeJSON(s)
 	} else {
+		log.Println("---")
 		if rVal.Kind() == reflect.Slice {
 			return s.decodeSlice(&rVal)
 		} else {
