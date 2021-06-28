@@ -133,14 +133,17 @@ func (s *JSONDecoder) DecodeRaw(v interface{}) error {
 
 func (s *JSONDecoder) Decode(v interface{}) error {
 	rVal := reflect.ValueOf(v)
+	log.Println("RVAL KIND", rVal.Kind())
 	if rVal.Kind() == reflect.Ptr {
 		rVal = rVal.Elem()
+		log.Println("RVAL KIND", rVal.Kind())
 		if rVal.Kind() == reflect.Ptr && rVal.IsNil() {
 			rVal.Set(reflect.New(rVal.Type().Elem()))
 			v = rVal.Elem().Addr().Interface()
 		}
 		s.parentObj = rVal
 	}
+	log.Println("V", v)
 	if jsonObj, check := v.(JSONObject); check {
 		log.Println("+++")
 		return jsonObj.DecodeJSON(s)
@@ -165,9 +168,9 @@ func (s *JSONDecoder) Decode(v interface{}) error {
 	*/
 }
 
-func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {
-	if _, err := s.Token(); err != nil {
-		return err
+func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
+	if _, err = s.Token(); err != nil {
+		return
 	}
 	if s.current != JSON_ARRAY {
 		if s.token == nil {
@@ -186,28 +189,46 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {
 			return nil
 		}
 		var rElem reflect.Value
+		var val interface{}
 		if elemType.Kind() == reflect.Ptr {
 			rElem = reflect.New(elemType.Elem())
+			val = rElem.Elem().Addr().Interface()
+			s.parentObj = rElem.Elem()
 		} else {
 			rElem = reflect.New(elemType)
+			if rElem.CanAddr() {
+				val = rElem.Addr().Interface()
+			}
+			s.parentObj = rElem
 		}
-		rRes := rElem.Interface()
-		if err := s.Decode(&rRes); err != nil {
-			return err
+		if obj, check := val.(JSONObject); check {
+			log.Println("DEC_JS")
+			err = obj.DecodeJSON(s)
+		} else {
+			log.Println("AAAAAAAAAAAAAAa")
+			if rElem.Kind() == reflect.Slice {
+				return s.decodeSlice(&rElem)
+			} else {
+				return s.Decoder.Decode(val)
+			}
 		}
-		if rRes == nil {
+		log.Println("VALID", s.parentObj.IsValid())
+		if err != nil {
+			return
+		}
+		log.Println("VAL", val)
+		if !s.parentObj.IsValid() {
 			sl.Set(reflect.Append(*sl, reflect.Zero(elemType)))
 		} else {
 			if elemType.Kind() == reflect.Ptr {
-				sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Convert(elemType)))
+				sl.Set(reflect.Append(*sl, reflect.ValueOf(val).Convert(elemType)))
 			} else {
-				sl.Set(reflect.Append(*sl, reflect.ValueOf(rRes).Elem()))
+				sl.Set(reflect.Append(*sl, reflect.ValueOf(val)).Elem())
 			}
 		}
 	}
-	_, err := s.Token()
-	if err != nil {
-		return err
+	if _, err = s.Token(); err != nil {
+		return
 	}
 	if d, check := s.token.(json.Delim); !check || d != ']' {
 		return fmt.Errorf("JSON PARSE ERROR :: EXPECTED ']', NOT %v", d)
