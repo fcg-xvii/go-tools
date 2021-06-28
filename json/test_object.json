@@ -1,6 +1,7 @@
 {
     "id": 1,
     "name": "Test JSON object",
+    "intervals": [ [ 1, 2 ], [ 3, 4 ] ],
     "embedded": {
         "id": 2,
         "name": "Test embedded object",

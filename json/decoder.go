@@ -140,15 +140,26 @@ func (s *JSONDecoder) Decode(v interface{}) error {
 		}
 		s.parentObj = rVal
 	}
-	if rVal.Kind() == reflect.Slice {
-		return s.decodeSlice(&rVal)
+	if jsonObj, check := v.(JSONObject); check {
+		return jsonObj.DecodeJSON(s)
 	} else {
-		if jsonObj, check := v.(JSONObject); check {
-			return jsonObj.DecodeJSON(s)
+		if rVal.Kind() == reflect.Slice {
+			return s.decodeSlice(&rVal)
 		} else {
 			return s.Decoder.Decode(v)
 		}
 	}
+	/*
+		if rVal.Kind() == reflect.Slice {
+			return s.decodeSlice(&rVal)
+		} else {
+			if jsonObj, check := v.(JSONObject); check {
+				return jsonObj.DecodeJSON(s)
+			} else {
+				return s.Decoder.Decode(v)
+			}
+		}
+	*/
 }
 
 func (s *JSONDecoder) decodeSlice(sl *reflect.Value) error {

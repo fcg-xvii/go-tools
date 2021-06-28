@@ -1,6 +1,7 @@
 package json
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -25,10 +26,36 @@ func TestInterface(t *testing.T) {
 	log.Println(m)
 }
 
+type TimeInterval struct {
+	Start  int
+	Finish int
+}
+
+type TimeIntervals []TimeInterval
+
+func (s *TimeIntervals) DecodeJSON(dec *JSONDecoder) error {
+	var sl [][]int
+	err := dec.Decode(&sl)
+	if err == nil {
+		*s = make(TimeIntervals, 0, len(sl))
+		for i, interval := range sl {
+			if len(interval) != 2 {
+				return fmt.Errorf("Index %v - expected 2 elements list", i)
+			}
+			*s = append(*s, TimeInterval{
+				Start:  interval[0],
+				Finish: interval[1],
+			})
+		}
+	}
+	return nil
+}
+
 type TObject struct {
-	id       int
-	name     string
-	embedded *TObject
+	id        int
+	name      string
+	embedded  *TObject
+	intervals *TimeIntervals
 }
 
 func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
@@ -41,6 +68,8 @@ func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
 			ptr = &s.name
 		case "embedded":
 			ptr = &s.embedded
+		case "intervals":
+			ptr = &s.intervals
 		}
 		return
 	})
