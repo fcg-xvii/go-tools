@@ -1,11 +1,13 @@
 [ 
     {
         "id": 1,
-        "name": "Test JSON object"
+        "name": "Test JSON object",
+        "intervals": [ [ 1, 2 ], [ 3, 4 ] ]
     },
     {
         "id": 100,
-        "name": "Test JSON object"
+        "name": "Test JSON object",
+        "intervals": [ 1, 2 ]
     },
     null
 ]

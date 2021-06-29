@@ -76,29 +76,56 @@ func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
 	})
 }
 
+/*func (s *TObject) EmbeddedString() string {
+	if s.embedded == nil {
+		return "nil"
+	} else {
+		return s.embedded.String()
+	}
+}
+
+func (s *TObject) String() string {
+	m := map[string]interface{}{
+		"id":        s.id,
+		"name":      s.name,
+		"embedded":  s.EmbeddedString(),
+		"intervals": s.intervals,
+	}
+	str, _ := json.MarshalIndent(m, "", "\t")
+	return string(str)
+}*/
+
 func TestDecoder(t *testing.T) {
+	/*
+		src := []byte("[ [ 1, 2 ], [ 3, 4 ] ]")
+		var sl [][]int
+		err := DecodeBytes(src, &sl)
+		log.Println(sl, err)
+	*/
 	// object
 	fObj, err := os.Open("test_object.json")
 	if err != nil {
 		t.Error(err)
 	}
 
-	var obj TObject
+	var obj *TObject
 	if err := Decode(fObj, &obj); err != nil {
 		t.Error(err)
 	}
 	fObj.Close()
-	log.Println("OBJ", obj, obj.embedded)
+	log.Println("OBJ", obj, obj.embedded, obj.intervals)
 	// slice
-	fObj, err = os.Open("test_array.json")
-	if err != nil {
-		t.Error(err)
-	}
+	/*
+		fObj, err = os.Open("test_array.json")
+		if err != nil {
+			t.Error(err)
+		}
 
-	var arr []*TObject
-	if err := Decode(fObj, &arr); err != nil {
-		t.Error(err)
-	}
-	fObj.Close()
-	log.Println("ARR", arr)
+		var arr []*TObject
+		if err := Decode(fObj, &arr); err != nil {
+			t.Error(err)
+		}
+		fObj.Close()
+		log.Println("ARR", arr)
+	*/
 }

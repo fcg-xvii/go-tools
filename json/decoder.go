@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 
 	"github.com/fcg-xvii/go-tools/containers"
@@ -70,6 +69,7 @@ type JSONDecoder struct {
 	objectkey    bool
 	objectClosed bool
 	parentObj    reflect.Value
+	err          error
 }
 
 func (s *JSONDecoder) IsObjectKey() bool      { return s.objectkey }
@@ -131,41 +131,29 @@ func (s *JSONDecoder) DecodeRaw(v interface{}) error {
 	return s.Decoder.Decode(v)
 }
 
-func (s *JSONDecoder) Decode(v interface{}) error {
+func (s *JSONDecoder) Decode(v interface{}) (err error) {
 	rVal := reflect.ValueOf(v)
-	log.Println("RVAL KIND", rVal.Kind())
 	if rVal.Kind() == reflect.Ptr {
 		rVal = rVal.Elem()
-		log.Println("RVAL KIND", rVal.Kind())
 		if rVal.Kind() == reflect.Ptr && rVal.IsNil() {
 			rVal.Set(reflect.New(rVal.Type().Elem()))
 			v = rVal.Elem().Addr().Interface()
 		}
 		s.parentObj = rVal
 	}
-	log.Println("V", v)
 	if jsonObj, check := v.(JSONObject); check {
-		log.Println("+++")
 		return jsonObj.DecodeJSON(s)
 	} else {
-		log.Println("---")
 		if rVal.Kind() == reflect.Slice {
-			return s.decodeSlice(&rVal)
+			err = s.decodeSlice(&rVal)
 		} else {
-			return s.Decoder.Decode(v)
+			err = s.Decoder.Decode(v)
 		}
 	}
-	/*
-		if rVal.Kind() == reflect.Slice {
-			return s.decodeSlice(&rVal)
-		} else {
-			if jsonObj, check := v.(JSONObject); check {
-				return jsonObj.DecodeJSON(s)
-			} else {
-				return s.Decoder.Decode(v)
-			}
-		}
-	*/
+	if err != nil {
+		s.err = err
+	}
+	return
 }
 
 func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
@@ -188,42 +176,26 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
 		if !s.More() {
 			return nil
 		}
-		var rElem reflect.Value
-		var val interface{}
-		if elemType.Kind() == reflect.Ptr {
-			rElem = reflect.New(elemType.Elem())
-			val = rElem.Elem().Addr().Interface()
-			s.parentObj = rElem.Elem()
+		var eType reflect.Type
+		if elemType.Kind() == reflect.Slice {
+			eType = elemType
+		} else if elemType.Kind() == reflect.Ptr {
+			eType = reflect.PtrTo(elemType.Elem())
 		} else {
-			rElem = reflect.New(elemType)
-			if rElem.CanAddr() {
-				val = rElem.Addr().Interface()
-			}
-			s.parentObj = rElem
+			eType = reflect.PtrTo(elemType)
 		}
-		if obj, check := val.(JSONObject); check {
-			log.Println("DEC_JS")
-			err = obj.DecodeJSON(s)
-		} else {
-			log.Println("AAAAAAAAAAAAAAa")
-			if rElem.Kind() == reflect.Slice {
-				return s.decodeSlice(&rElem)
-			} else {
-				return s.Decoder.Decode(val)
-			}
-		}
-		log.Println("VALID", s.parentObj.IsValid())
-		if err != nil {
+		rElem := reflect.New(eType)
+		val := rElem.Interface()
+		if err = s.Decode(val); err != nil {
 			return
 		}
-		log.Println("VAL", val)
 		if !s.parentObj.IsValid() {
 			sl.Set(reflect.Append(*sl, reflect.Zero(elemType)))
 		} else {
-			if elemType.Kind() == reflect.Ptr {
-				sl.Set(reflect.Append(*sl, reflect.ValueOf(val).Convert(elemType)))
+			if elemType.Kind() == reflect.Ptr || elemType.Kind() == reflect.Slice {
+				sl.Set(reflect.Append(*sl, rElem.Elem()))
 			} else {
-				sl.Set(reflect.Append(*sl, reflect.ValueOf(val)).Elem())
+				sl.Set(reflect.Append(*sl, rElem.Elem().Elem()))
 			}
 		}
 	}
@@ -236,9 +208,9 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
 	return nil
 }
 
-func (s *JSONDecoder) DecodeObject(fieldRequest func(string) (interface{}, error)) error {
-	if _, err := s.Token(); err != nil {
-		return err
+func (s *JSONDecoder) DecodeObject(fieldRequest func(string) (interface{}, error)) (err error) {
+	if _, err = s.Token(); err != nil {
+		return
 	}
 	if s.current != JSON_OBJECT {
 		if s.token == nil {
@@ -246,23 +218,27 @@ func (s *JSONDecoder) DecodeObject(fieldRequest func(string) (interface{}, error
 				s.parentObj.Set(reflect.Zero(s.parentObj.Type()))
 				s.parentObj = reflect.Value{}
 			}
-			return nil
+			return
 		} else {
 			return fmt.Errorf("EXPCTED OBJECT, NOT %T", s.current)
 		}
 	}
 	el := s.EmbeddedLevel()
+	var t json.Token
+	var ptr interface{}
 	for el <= s.EmbeddedLevel() {
-		t, err := s.Token()
-		if err != nil {
-			return err
+		if t, err = s.Token(); err != nil {
+			return
 		}
 		if s.Current() == JSON_VALUE && s.IsObjectKey() {
-			if ptr, err := fieldRequest(t.(string)); err != nil {
-				return err
-			} else if ptr != nil {
-				if err = s.Decode(ptr); err != nil {
-					return err
+			if ptr, err = fieldRequest(t.(string)); err != nil {
+				return
+			}
+			if ptr != nil {
+				err = s.Decode(ptr) // err = nil (WTF???)
+				if s.err != nil {
+					err = s.err
+					return
 				}
 			} else {
 				if err = s.Next(); err != nil {
