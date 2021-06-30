@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"reflect"
 
 	"github.com/fcg-xvii/go-tools/containers"
@@ -135,7 +136,9 @@ func (s *JSONDecoder) Decode(v interface{}) (err error) {
 	rVal := reflect.ValueOf(v)
 	if rVal.Kind() == reflect.Ptr {
 		rVal = rVal.Elem()
+		log.Println("RVAL", rVal, v)
 		if rVal.Kind() == reflect.Ptr && rVal.IsNil() {
+			log.Println("IS_NILLLLLL")
 			rVal.Set(reflect.New(rVal.Type().Elem()))
 			v = rVal.Elem().Addr().Interface()
 		}
@@ -146,6 +149,7 @@ func (s *JSONDecoder) Decode(v interface{}) (err error) {
 	} else {
 		if rVal.Kind() == reflect.Slice {
 			err = s.decodeSlice(&rVal)
+			log.Println("V", v, rVal.Type())
 		} else {
 			err = s.Decoder.Decode(v)
 		}
@@ -157,11 +161,14 @@ func (s *JSONDecoder) Decode(v interface{}) (err error) {
 }
 
 func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
+	log.Println("DECODE_SLICE")
 	if _, err = s.Token(); err != nil {
 		return
 	}
 	if s.current != JSON_ARRAY {
 		if s.token == nil {
+			log.Println("AAAAAAAAAAAAAAAAAAAAAAAA")
+			sl.Set(reflect.Zero(sl.Type()))
 			if s.parentObj.IsValid() {
 				s.parentObj.Set(reflect.Zero(s.parentObj.Type()))
 				s.parentObj = reflect.Value{}
@@ -172,10 +179,9 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
 		}
 	}
 	elemType := reflect.TypeOf(sl.Interface()).Elem()
+	log.Println("ELEM_TYPE")
 	for s.More() {
-		if !s.More() {
-			return nil
-		}
+		log.Println("!!!!!")
 		var eType reflect.Type
 		if elemType.Kind() == reflect.Slice {
 			eType = elemType
@@ -189,10 +195,12 @@ func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
 		if err = s.Decode(val); err != nil {
 			return
 		}
+		log.Println("VALLLLL", val)
 		if !s.parentObj.IsValid() {
 			sl.Set(reflect.Append(*sl, reflect.Zero(elemType)))
 		} else {
 			if elemType.Kind() == reflect.Ptr || elemType.Kind() == reflect.Slice {
+				log.Println(rElem.Elem().IsNil())
 				sl.Set(reflect.Append(*sl, rElem.Elem()))
 			} else {
 				sl.Set(reflect.Append(*sl, rElem.Elem().Elem()))

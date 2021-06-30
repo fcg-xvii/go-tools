@@ -70,6 +70,7 @@ func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
 		case "embedded":
 			ptr = &s.embedded
 		case "intervals":
+			log.Println("DDD", s.intervals)
 			ptr = &s.intervals
 		}
 		return
