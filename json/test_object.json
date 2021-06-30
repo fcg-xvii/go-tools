@@ -1,11 +1,1 @@
-{
-    "id": 1,
-    "name": "Test JSON object",
-    "intervals": null,
-    "embedded": {
-        "id": 2,
-        "name": "Test embedded object",
-        "embedded": null,
-        "intervals": null
-    }
-}
+null

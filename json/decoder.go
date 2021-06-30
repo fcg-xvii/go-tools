@@ -47,7 +47,7 @@ func DecodeBytes(src []byte, obj interface{}) error {
 }
 
 type JSONObject interface {
-	DecodeJSON(*JSONDecoder) error
+	JSONField(fieldName string) (fieldPtr interface{}, err error)
 }
 
 func InitJSONDecoderFromSource(src []byte) *JSONDecoder {
@@ -71,6 +71,7 @@ type JSONDecoder struct {
 	objectClosed bool
 	parentObj    reflect.Value
 	err          error
+	counter      int
 }
 
 func (s *JSONDecoder) IsObjectKey() bool      { return s.objectkey }
@@ -132,10 +133,18 @@ func (s *JSONDecoder) DecodeRaw(v interface{}) error {
 	return s.Decoder.Decode(v)
 }
 
+/*
 func (s *JSONDecoder) Decode(v interface{}) (err error) {
+	log.Println("counter start", s.counter)
+	s.counter++
+	defer func() {
+		s.counter--
+		log.Println("counter finish", s.counter)
+	}()
 	rVal := reflect.ValueOf(v)
 	if rVal.Kind() == reflect.Ptr {
 		rVal = rVal.Elem()
+		log.Println("iface", rVal.Interface())
 		log.Println("RVAL", rVal, v)
 		if rVal.Kind() == reflect.Ptr && rVal.IsNil() {
 			log.Println("IS_NILLLLLL")
@@ -158,6 +167,34 @@ func (s *JSONDecoder) Decode(v interface{}) (err error) {
 		s.err = err
 	}
 	return
+}
+*/
+
+func (s *JSONDecoder) Decode(v interface{}) (err error) {
+	rVal := reflect.ValueOf(v)
+	if rVal.Kind() != reflect.Ptr {
+		return fmt.Errorf("EXPECTED POINTER, GIVEN %v", rVal.Kind())
+	}
+	eVal := rVal.Elem()
+	if err = s.decodeReflect(&eVal); err == nil {
+		v = eVal.Addr().Interface()
+	}
+	return
+}
+
+func (s *JSONDecoder) decodeReflect(rVal *reflect.Value) (err error) {
+	log.Println("reflect kind", rVal.Kind())
+	iface := rVal.Interface()
+	if _, check := iface.(JSONObject); check {
+
+	} else {
+
+	}
+	return nil
+}
+
+func (s *JSONDecoder) decodeJSONObject(rVal *reflect.Value) (err error) {
+	return nil
 }
 
 func (s *JSONDecoder) decodeSlice(sl *reflect.Value) (err error) {
