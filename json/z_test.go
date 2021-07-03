@@ -33,7 +33,7 @@ type TimeInterval struct {
 
 type TimeIntervals []TimeInterval
 
-func (s *TimeIntervals) DecodeJSON(dec *JSONDecoder) error {
+func (s *TimeIntervals) JSONDecode(dec *JSONDecoder) error {
 	var sl [][]int
 	err := dec.Decode(&sl)
 	if err == nil {
@@ -48,7 +48,7 @@ func (s *TimeIntervals) DecodeJSON(dec *JSONDecoder) error {
 			})
 		}
 	}
-	return nil
+	return err
 }
 
 type TObject struct {
@@ -58,23 +58,36 @@ type TObject struct {
 	intervals *TimeIntervals
 }
 
-func (s *TObject) DecodeJSON(dec *JSONDecoder) error {
-	log.Println("DECODE_TOBJECT")
-	return dec.DecodeObject(func(field string) (ptr interface{}, err error) {
-		log.Println("<<<<<<<<<", field)
-		switch field {
-		case "id":
-			ptr = &s.id
-		case "name":
-			ptr = &s.name
-		case "embedded":
-			ptr = &s.embedded
-		case "intervals":
-			log.Println("DDD", s.intervals)
-			ptr = &s.intervals
-		}
-		return
-	})
+func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
+	switch fieldName {
+	case "id":
+		ptr = &s.id
+	case "name":
+		ptr = &s.name
+	case "embedded":
+		ptr = &s.embedded
+	case "intervals":
+		log.Println("DDD", s.intervals)
+		ptr = &s.intervals
+	}
+	return
+	/*
+		return dec.DecodeObject(func(field string) (ptr interface{}, err error) {
+			log.Println("<<<<<<<<<", field)
+			switch field {
+			case "id":
+				ptr = &s.id
+			case "name":
+				ptr = &s.name
+			case "embedded":
+				ptr = &s.embedded
+			case "intervals":
+				log.Println("DDD", s.intervals)
+				ptr = &s.intervals
+			}
+			return
+		})
+	*/
 }
 
 /*func (s *TObject) EmbeddedString() string {
@@ -109,12 +122,13 @@ func TestDecoder(t *testing.T) {
 		t.Error(err)
 	}
 
-	var obj *TObject
+	var obj *TObject = new(TObject)
 	if err := Decode(fObj, &obj); err != nil {
 		t.Error(err)
 	}
 	fObj.Close()
-	log.Println("OBJ", obj, obj.embedded, obj.intervals)
+	log.Println("OBJ", obj, err)
+	//log.Println("OBJ", obj, obj.embedded, obj.intervals)
 	// slice
 	/*
 		fObj, err = os.Open("test_array.json")

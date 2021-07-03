@@ -1,1 +1,5 @@
-null
+{
+    "id": 1,
+    "name": "Test JSON object",
+    "intervals": [ [ 1, 2 ], [ 3, 4 ] ]
+}
