@@ -37,6 +37,7 @@ func (s *TimeIntervals) JSONDecode(dec *JSONDecoder) error {
 	var sl [][]int
 	err := dec.Decode(&sl)
 	if err == nil {
+		log.Println("SSSSSS", s)
 		*s = make(TimeIntervals, 0, len(sl))
 		for i, interval := range sl {
 			if len(interval) != 2 {

@@ -66,36 +66,6 @@ type JSONObject interface {
 	JSONField(fieldName string) (fieldPtr interface{}, err error)
 }
 
-/*
-func (s *JSONDecoder) JSONTypeCheck(rv *reflect.Value) (res *reflect.Value, t Type) {
-	log.Println(rv, rv.Kind())
-	// check to get interface
-	if !rv.CanInterface() {
-		return
-	}
-	// check JSONInterface
-	if _, check := rv.Interface().(JSONInterface); check {
-		res, t = rv, TypeInterface
-		return
-	}
-	// check JSONObject
-	if _, check := rv.Interface().(JSONObject); check {
-		res, t = rv, TypeObject
-		return
-	}
-	// check rv is pointer
-	if rv.Kind() == reflect.Ptr {
-		elem := rv.Elem()
-		if elem.IsValid() {
-			return s.JSONTypeCheck(&elem)
-		}
-	} else if rv.Kind() == reflect.Slice {
-		res, t = rv, TypeSlice
-	}
-	return
-}
-*/
-
 func (s *JSONDecoder) JSONTypeCheck(rv *reflect.Value) (t Type) {
 	// check slice
 	if rv.Kind() == reflect.Slice {
@@ -212,24 +182,14 @@ func (s *JSONDecoder) Decode(v interface{}) (err error) {
 }
 
 func (s *JSONDecoder) decodeReflect(rv *reflect.Value) (err error) {
-	log.Println("DECODE_REFLECT")
-	/*if ev, t := s.JSONTypeCheck(rv); t != TypeUndefined {
-		log.Println("TYPE = ", t)
-		switch t {
-		case TypeInterface:
-			return ev.Interface().(JSONInterface).JSONDecode(s)
-		case TypeObject:
-			return s.decodeJSONObject(ev)
-		case TypeSlice:
-			err = s.decodeSlice(ev)
-			log.Println("ERR", err)
-			return
-		}
-	}*/
+	log.Println("DECODE_REFLECT", rv, rv.IsNil())
 	switch s.JSONTypeCheck(rv) {
 	case TypeInterface:
 		{
-			log.Println(rv.Type())
+			if rv.Kind() == reflect.Ptr && rv.IsNil() {
+				rv.Set(reflect.New(rv.Type().Elem()))
+			}
+			log.Println("RR", rv, rv.IsNil())
 			return rv.Interface().(JSONInterface).JSONDecode(s)
 		}
 	case TypeObject:
