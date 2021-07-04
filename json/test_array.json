@@ -7,7 +7,7 @@
     {
         "id": 100,
         "name": "Test JSON object",
-        "intervals": [ 1, 2 ]
+        "intervals": [ [ 100, 200 ] ]
     },
     null
 ]

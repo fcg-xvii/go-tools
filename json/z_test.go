@@ -1,6 +1,7 @@
 package json
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -31,17 +32,26 @@ type TimeInterval struct {
 	Finish int
 }
 
+func (s *TimeInterval) JSONDecode(dec *JSONDecoder) (err error) {
+	var sl []int
+	if err = dec.Decode(&sl); err == nil {
+		if len(sl) != 2 {
+			return errors.New("TimeInterval: expected 2 int values")
+		}
+		s.Start, s.Finish = sl[0], sl[1]
+	}
+	return
+}
+
 type TimeIntervals []TimeInterval
 
-func (s *TimeIntervals) JSONDecode(dec *JSONDecoder) error {
+func (s *TimeIntervals) JSONDecode(dec *JSONDecoder) (isNil bool, err error) {
 	var sl [][]int
-	err := dec.Decode(&sl)
-	if err == nil {
-		log.Println("SSSSSS", s)
+	if err = dec.Decode(&sl); err == nil && sl != nil {
 		*s = make(TimeIntervals, 0, len(sl))
 		for i, interval := range sl {
 			if len(interval) != 2 {
-				return fmt.Errorf("Index %v - expected 2 elements list", i)
+				return true, fmt.Errorf("Index %v - expected 2 elements list", i)
 			}
 			*s = append(*s, TimeInterval{
 				Start:  interval[0],
@@ -49,7 +59,8 @@ func (s *TimeIntervals) JSONDecode(dec *JSONDecoder) error {
 			})
 		}
 	}
-	return err
+	isNil = sl == nil
+	return
 }
 
 type TObject struct {
@@ -72,23 +83,6 @@ func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
 		ptr = &s.intervals
 	}
 	return
-	/*
-		return dec.DecodeObject(func(field string) (ptr interface{}, err error) {
-			log.Println("<<<<<<<<<", field)
-			switch field {
-			case "id":
-				ptr = &s.id
-			case "name":
-				ptr = &s.name
-			case "embedded":
-				ptr = &s.embedded
-			case "intervals":
-				log.Println("DDD", s.intervals)
-				ptr = &s.intervals
-			}
-			return
-		})
-	*/
 }
 
 /*func (s *TObject) EmbeddedString() string {
@@ -112,8 +106,9 @@ func (s *TObject) String() string {
 
 func TestDecoder(t *testing.T) {
 	/*
-		src := []byte("[ [ 1, 2 ], [ 3, 4 ] ]")
-		var sl [][]int
+		//src := []byte("[ [ 1, 2 ], [ 3, 4 ] ]")
+		src := []byte("null")
+		var sl *TimeIntervals
 		err := DecodeBytes(src, &sl)
 		log.Println(sl, err)
 	*/
@@ -128,20 +123,19 @@ func TestDecoder(t *testing.T) {
 		t.Error(err)
 	}
 	fObj.Close()
-	log.Println("OBJ", obj, err)
+	log.Println("OBJ", obj, err, obj.embedded, obj.intervals)
 	//log.Println("OBJ", obj, obj.embedded, obj.intervals)
 	// slice
-	/*
-		fObj, err = os.Open("test_array.json")
-		if err != nil {
-			t.Error(err)
-		}
 
-		var arr []*TObject
-		if err := Decode(fObj, &arr); err != nil {
-			t.Error(err)
-		}
-		fObj.Close()
-		log.Println("ARR", arr)
-	*/
+	fObj, err = os.Open("test_array.json")
+	if err != nil {
+		t.Error(err)
+	}
+
+	var arr []*TObject
+	if err := Decode(fObj, &arr); err != nil {
+		t.Error(err)
+	}
+	fObj.Close()
+	log.Println("ARR", arr)
 }
