@@ -63,46 +63,33 @@ func (s *TimeIntervals) JSONDecode(dec *JSONDecoder) (isNil bool, err error) {
 	return
 }
 
+type NestedObject struct {
+	ID        int
+	Name      string
+	Embedded  *TObject
+	Intervals *TimeIntervals
+}
+
 type TObject struct {
-	id        int
-	name      string
-	embedded  *TObject
-	intervals *TimeIntervals
+	ID        int
+	Name      string
+	Embedded  *NestedObject
+	Intervals *TimeIntervals
 }
 
 func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
 	switch fieldName {
 	case "id":
-		ptr = &s.id
+		ptr = &s.ID
 	case "name":
-		ptr = &s.name
+		ptr = &s.Name
 	case "embedded":
-		ptr = &s.embedded
+		ptr = &s.Embedded
 	case "intervals":
-		log.Println("DDD", s.intervals)
-		ptr = &s.intervals
+		ptr = &s.Intervals
 	}
 	return
 }
-
-/*func (s *TObject) EmbeddedString() string {
-	if s.embedded == nil {
-		return "nil"
-	} else {
-		return s.embedded.String()
-	}
-}
-
-func (s *TObject) String() string {
-	m := map[string]interface{}{
-		"id":        s.id,
-		"name":      s.name,
-		"embedded":  s.EmbeddedString(),
-		"intervals": s.intervals,
-	}
-	str, _ := json.MarshalIndent(m, "", "\t")
-	return string(str)
-}*/
 
 func TestDecoder(t *testing.T) {
 	/*
@@ -118,24 +105,26 @@ func TestDecoder(t *testing.T) {
 		t.Error(err)
 	}
 
-	var obj *TObject = new(TObject)
+	var obj TObject
 	if err := Decode(fObj, &obj); err != nil {
 		t.Error(err)
 	}
 	fObj.Close()
-	log.Println("OBJ", obj, err, obj.embedded, obj.intervals)
+	log.Println("OBJ", obj, err, obj.Embedded, obj.Intervals)
 	//log.Println("OBJ", obj, obj.embedded, obj.intervals)
 	// slice
 
-	fObj, err = os.Open("test_array.json")
-	if err != nil {
-		t.Error(err)
-	}
+	/*
+		fObj, err = os.Open("test_array.json")
+		if err != nil {
+			t.Error(err)
+		}
 
-	var arr []*TObject
-	if err := Decode(fObj, &arr); err != nil {
-		t.Error(err)
-	}
-	fObj.Close()
-	log.Println("ARR", arr)
+		var arr []*TObject
+		if err := Decode(fObj, &arr); err != nil {
+			t.Error(err)
+		}
+		fObj.Close()
+		log.Println("ARR", arr)
+	*/
 }

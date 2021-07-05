@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"reflect"
 
 	"github.com/fcg-xvii/go-tools/containers"
@@ -198,8 +199,18 @@ func (s *JSONDecoder) decodeReflect(rv *reflect.Value) (err error) {
 				ev := rv.Elem()
 				if !ev.IsValid() {
 					ev = reflect.New(rv.Type().Elem())
-					if err = s.decodeReflect(&ev); err == nil && !ev.Elem().IsNil() {
-						rv.Set(ev)
+					//log.Println(ev.Elem().Kind(), ev.Elem().IsNil())
+					if ev.Elem().Kind() == reflect.Ptr {
+						if err = s.decodeReflect(&ev); err == nil {
+							rv.Set(ev)
+						}
+						return
+					} else {
+						if err = s.Decoder.Decode(rv.Interface()); err == nil {
+							rv.Set(ev)
+							log.Println(">>>", ev.Elem(), ev.Interface() == nil)
+						}
+						return
 					}
 				} else {
 					return s.decodeReflect(&ev)
@@ -215,8 +226,57 @@ func (s *JSONDecoder) decodeReflect(rv *reflect.Value) (err error) {
 	}
 }
 
-// slice
+func (s *JSONDecoder) decodeRawObject(rv *reflect.Value) (err error) {
+	var t json.Token
+	// chek first token is object
+	if t, err = s.Token(); err != nil {
+		return
+	}
+	if s.current != JSON_OBJECT {
+		// check null token
+		if t == nil {
+			if rv.CanAddr() && !rv.IsNil() {
+				rv.Set(reflect.Zero(rv.Type()))
+			}
+			return
+		}
+		// token is not object
+		return fmt.Errorf("EXPCTED OBJECT, NOT %T", t)
+	}
+	// check null pounter in source object
+	if rv.Kind() == reflect.Ptr && rv.IsNil() {
+		// create new object
+		rv.Set(reflect.New(rv.Type().Elem()))
+	}
+	el := s.EmbeddedLevel()
+	for el <= s.EmbeddedLevel() {
+		if t, err = s.Token(); err != nil {
+			return
+		}
+		if s.Current() == JSON_VALUE && s.IsObjectKey() {
+			log.Println(t.(string))
 
+			/*
+				if fieldPtr, err = obj.JSONField(t.(string)); err != nil {
+					return
+				}
+				if fieldPtr != nil {
+					rv := reflect.ValueOf(fieldPtr)
+					if err = s.decodeReflect(&rv); err != nil {
+						return
+					}
+				} else {
+					if err = s.Next(); err != nil {
+						return
+					}
+				}
+			*/
+		}
+	}
+	return
+}
+
+// slice
 func (s *JSONDecoder) decodeSlice(rv *reflect.Value) (err error) {
 	var t json.Token
 	if t, err = s.Token(); err != nil {
