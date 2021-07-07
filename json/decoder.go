@@ -262,6 +262,7 @@ func (s *JSONDecoder) decodeRawObject(rv *reflect.Value) (err error) {
 			return
 		}
 		if s.Current() == JSON_VALUE && s.IsObjectKey() {
+			s.buf()
 			if f := rv.FieldByName(t.(string)); f.IsValid() {
 				rrv := reflect.New(f.Type())
 				if err = s.decodeReflect(&rrv); err != nil {
@@ -270,6 +271,9 @@ func (s *JSONDecoder) decodeRawObject(rv *reflect.Value) (err error) {
 				if !rrv.IsNil() {
 					f.Set(rrv.Elem())
 				}
+			} else {
+				var i interface{}
+				s.Decoder.Decode(&i)
 			}
 		}
 	}

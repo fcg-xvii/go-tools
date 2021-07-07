@@ -128,3 +128,44 @@ func TestDecoder(t *testing.T) {
 		log.Println(v)
 	}
 }
+
+/////////////////////////////////////////////////////////////////// project
+
+type LeadVerifySettings struct {
+	BotEnabled     bool
+	ManagerEnabled bool
+	CallDecryption bool
+	//CallLeadIntervals          []*TimeInterval
+	CallsMaxCount int
+	FirstDelay    int
+	//QualityCriteries           []string
+	RecallMinPeriod            int
+	ProductDescriptionFilename string
+	ScriptFilename             string
+}
+
+type Project struct {
+	ID                 int64
+	Name               string
+	LeadVerifySettings *LeadVerifySettings
+}
+
+func (s *Project) JSONField(fieldName string) (ptr interface{}, err error) {
+	switch fieldName {
+	case "id":
+		ptr = &s.ID
+	case "name":
+		ptr = &s.Name
+	case "lead_verify_settings":
+		ptr = &s.LeadVerifySettings
+	}
+	return
+}
+
+func TestProject(t *testing.T) {
+	src := `{"id": 1536, "name": "Первый проект 2", "lead_verify_settings": {"bot_enabled": false, "first_delay": 81000, "call_decryption": true, "calls_max_count": 100, "manager_enabled": false, "script_filename": null, "quality_criteries": ["Ок (качественный лид)", "номер не существует", "номер не отвечает/заблокирован/сбрасывает/молчание в трубке ХХХ дней", "номер заблокирован", "не автор заявки", "не наше ГЕО", "не заинтересован в продукте (у клиента другой вопрос)", "нет 18 лет", "несоответствие языка", "неразборчивая речь"], "recall_min_period": 9600, "call_lead_day_intervals": [[3600, 7200]], "product_description_filename": null}}`
+	log.Println(string(src))
+	var proj Project
+	err := DecodeBytes([]byte(src), &proj)
+	log.Println(proj, err)
+}
