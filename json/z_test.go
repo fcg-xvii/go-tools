@@ -67,14 +67,14 @@ type NestedObject struct {
 	ID        int
 	Name      string
 	Embedded  *TObject
-	Intervals *TimeIntervals
+	Intervals TimeIntervals
 }
 
 type TObject struct {
 	ID        int
 	Name      string
 	Embedded  *NestedObject
-	Intervals *TimeIntervals
+	Intervals TimeIntervals
 }
 
 func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
@@ -113,18 +113,18 @@ func TestDecoder(t *testing.T) {
 	log.Println("OBJ", obj, err, obj.Embedded, obj.Intervals)
 	//log.Println("OBJ", obj, obj.embedded, obj.intervals)
 	// slice
+	fObj, err = os.Open("test_array.json")
+	if err != nil {
+		t.Error(err)
+	}
 
-	/*
-		fObj, err = os.Open("test_array.json")
-		if err != nil {
-			t.Error(err)
-		}
-
-		var arr []*TObject
-		if err := Decode(fObj, &arr); err != nil {
-			t.Error(err)
-		}
-		fObj.Close()
-		log.Println("ARR", arr)
-	*/
+	var arr []*TObject
+	if err := Decode(fObj, &arr); err != nil {
+		t.Error(err)
+	}
+	fObj.Close()
+	log.Println("ARR", arr)
+	for _, v := range arr {
+		log.Println(v)
+	}
 }
