@@ -210,3 +210,9 @@ func (s Map) Copy() (res Map) {
 func (s Map) IsEmpty() bool {
 	return len(s) == 0
 }
+
+func (s Map) Update(m Map) {
+	for key, val := range m {
+		s[key] = val
+	}
+}
