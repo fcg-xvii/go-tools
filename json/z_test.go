@@ -91,6 +91,11 @@ func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
 	return
 }
 
+func (s *TObject) JSONFinish() error {
+	log.Println("FINISH...")
+	return nil
+}
+
 func TestDecoder(t *testing.T) {
 	/*
 		//src := []byte("[ [ 1, 2 ], [ 3, 4 ] ]")

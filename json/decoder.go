@@ -66,6 +66,10 @@ type JSONObject interface {
 	JSONField(fieldName string) (fieldPtr interface{}, err error)
 }
 
+type JSONFinisher interface {
+	JSONFinish() error
+}
+
 func (s *JSONDecoder) JSONTypeCheck(rv *reflect.Value) (t Type) {
 	// check slice
 	iface := rv.Interface()
@@ -362,6 +366,9 @@ func (s *JSONDecoder) decodeJSONObject(rv *reflect.Value) (err error) {
 				}
 			}
 		}
+	}
+	if finisher, check := rv.Interface().(JSONFinisher); check {
+		err = finisher.JSONFinish()
 	}
 	return
 }
