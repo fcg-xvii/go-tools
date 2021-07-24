@@ -228,3 +228,8 @@ func (s Map) Update(m Map) {
 		s[key] = val
 	}
 }
+
+func (s Map) StorePtr(key string, val interface{}) interface{} {
+	s[key] = &val
+	return &val
+}

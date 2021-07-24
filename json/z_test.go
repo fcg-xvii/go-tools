@@ -180,5 +180,6 @@ func TestMap(t *testing.T) {
 	m := Map{
 		"one": float64(10.2),
 	}
-	log.Println(m.Int32("one", 0))
+	m.StorePtr("two", "Coooool")
+	log.Println(m.Int32("one", 0), m.String("two", "!"))
 }
