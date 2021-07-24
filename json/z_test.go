@@ -77,11 +77,12 @@ type TObject struct {
 	Intervals TimeIntervals
 }
 
-func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
+func (s *TObject) JSONField(fieldName string, storeTemp Map) (ptr interface{}, err error) {
 	switch fieldName {
 	case "id":
 		ptr = &s.ID
 	case "name":
+		storeTemp["idd"] = &s.Name
 		ptr = &s.Name
 	case "embedded":
 		ptr = &s.Embedded
@@ -91,8 +92,8 @@ func (s *TObject) JSONField(fieldName string) (ptr interface{}, err error) {
 	return
 }
 
-func (s *TObject) JSONFinish() error {
-	log.Println("FINISH...")
+func (s *TObject) JSONFinish(storeTemp Map) error {
+	log.Println("FINISH...", storeTemp.String("idd", "!"))
 	return nil
 }
 
@@ -155,7 +156,7 @@ type Project struct {
 	LeadVerifySettings *LeadVerifySettings
 }
 
-func (s *Project) JSONField(fieldName string) (ptr interface{}, err error) {
+func (s *Project) JSONField(fieldName string, storeTemp Map) (ptr interface{}, err error) {
 	switch fieldName {
 	case "id":
 		ptr = &s.ID
@@ -173,4 +174,11 @@ func TestProject(t *testing.T) {
 	var proj Project
 	err := DecodeBytes([]byte(src), &proj)
 	log.Println(proj, err)
+}
+
+func TestMap(t *testing.T) {
+	m := Map{
+		"one": float64(10.2),
+	}
+	log.Println(m.Int32("one", 0))
 }

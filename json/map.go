@@ -59,23 +59,34 @@ func (s Map) KeysExists(keys []string) string {
 	return ""
 }
 
+func val(l, r interface{}) (res reflect.Value) {
+	lVal, rVal := reflect.ValueOf(l), reflect.ValueOf(r)
+	if lVal.Kind() == reflect.Ptr && rVal.Kind() != reflect.Ptr {
+		return val(lVal.Elem().Interface(), r)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			res = rVal
+		}
+	}()
+	res = lVal.Convert(rVal.Type())
+	return
+}
+
 // Int returns int64 value by key.
 // If key isn't defined will be returned defaultVal arg value
 func (s Map) Int(key string, defaultVal int64) int64 {
 	if iface, check := s[key]; check {
-		rVal := reflect.ValueOf(iface)
-		switch rVal.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			return rVal.Int()
-		case reflect.Float32, reflect.Float64:
-			return int64(rVal.Float())
-		}
+		return val(iface, defaultVal).Int()
 	}
 	return defaultVal
 }
 
 func (s Map) Int32(key string, defaultVal int) int {
-	return int(s.Int(key, int64(defaultVal)))
+	if iface, check := s[key]; check {
+		return val(iface, defaultVal).Interface().(int)
+	}
+	return defaultVal
 }
 
 // Value returns interface object with attempt to convert to defaultVal type.
@@ -144,7 +155,8 @@ func (s Map) ValueJSON(key string, defaultVal []byte) (res []byte) {
 // If key isn't defined will be returned defaultVal arg value
 func (s Map) String(key, defaultVal string) string {
 	if iface, check := s[key]; check {
-		return fmt.Sprint(iface)
+		return val(iface, defaultVal).String()
+		//return fmt.Sprint(iface)
 	}
 	return defaultVal
 }

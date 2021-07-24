@@ -63,11 +63,11 @@ type JSONInterface interface {
 }
 
 type JSONObject interface {
-	JSONField(fieldName string) (fieldPtr interface{}, err error)
+	JSONField(fieldName string, storeTemp Map) (fieldPtr interface{}, err error)
 }
 
 type JSONFinisher interface {
-	JSONFinish() error
+	JSONFinish(storeTemp Map) error
 }
 
 func (s *JSONDecoder) JSONTypeCheck(rv *reflect.Value) (t Type) {
@@ -344,15 +344,14 @@ func (s *JSONDecoder) decodeJSONObject(rv *reflect.Value) (err error) {
 		// create new object
 		rv.Set(reflect.New(rv.Type().Elem()))
 	}
-	obj := rv.Interface().(JSONObject)
-	el := s.EmbeddedLevel()
+	el, obj, store := s.EmbeddedLevel(), rv.Interface().(JSONObject), NewMap()
 	var fieldPtr interface{}
 	for el <= s.EmbeddedLevel() {
 		if t, err = s.Token(); err != nil {
 			return
 		}
 		if s.Current() == JSON_VALUE && s.IsObjectKey() {
-			if fieldPtr, err = obj.JSONField(t.(string)); err != nil {
+			if fieldPtr, err = obj.JSONField(t.(string), store); err != nil {
 				return
 			}
 			if fieldPtr != nil {
@@ -368,7 +367,7 @@ func (s *JSONDecoder) decodeJSONObject(rv *reflect.Value) (err error) {
 		}
 	}
 	if finisher, check := rv.Interface().(JSONFinisher); check {
-		err = finisher.JSONFinish()
+		err = finisher.JSONFinish(store)
 	}
 	return
 }
