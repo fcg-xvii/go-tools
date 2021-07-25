@@ -42,4 +42,12 @@ func TestList(t *testing.T) {
 	log.Println(l.first, l.last)
 	l.PushBack(100)
 	log.Println(l.Slice(), l.Size(), l.first, l.last)
+
+	sl := make([]interface{}, 10)
+	for i, _ := range sl {
+		sl[i] = i * 100
+	}
+	log.Println(sl)
+	l = ListFromSlise(sl)
+	log.Println(l.Slice())
 }

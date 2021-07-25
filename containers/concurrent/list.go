@@ -75,6 +75,14 @@ func (s *Element) setPrev(elem *Element) {
 	s.m.Unlock()
 }
 
+func ListFromSlise(sl []interface{}) *List {
+	l := NewList()
+	for _, val := range sl {
+		l.PushBack(val)
+	}
+	return l
+}
+
 func NewList() *List {
 	return &List{
 		m: new(sync.RWMutex),
