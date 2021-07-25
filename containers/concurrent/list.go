@@ -180,3 +180,12 @@ func (s *List) Slice() []interface{} {
 	}
 	return res
 }
+
+func (s *List) Search(val interface{}) *Element {
+	for f := s.First(); f != nil; f = f.Next() {
+		if f.Val() == val {
+			return f
+		}
+	}
+	return nil
+}

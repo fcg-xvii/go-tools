@@ -50,4 +50,9 @@ func TestList(t *testing.T) {
 	log.Println(sl)
 	l = ListFromSlise(sl)
 	log.Println(l.Slice())
+
+	elem = l.Search(500)
+	log.Println(elem)
+	elem = l.Search(1500)
+	log.Println(elem)
 }
