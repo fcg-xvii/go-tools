@@ -1,6 +1,9 @@
 package concurrent
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 
 func TestQueue(t *testing.T) {
 	q := NewQueue()
@@ -16,4 +19,25 @@ func TestQueue(t *testing.T) {
 		}
 	}
 	t.Log(q)
+}
+
+func showList(l *List) {
+}
+
+func TestList(t *testing.T) {
+	l := NewList()
+	log.Println(l)
+	for i := 0; i < 10; i++ {
+		l.PushFront(i)
+	}
+	log.Println(l.Slice())
+	elem := l.Index(0)
+	log.Println(elem)
+	l.Remove(elem)
+	log.Println(l.Slice())
+	for l.Size() > 0 {
+		l.Remove(l.First())
+		log.Println(l.Slice())
+	}
+	log.Println(l.first, l.last)
 }
