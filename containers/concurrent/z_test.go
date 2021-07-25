@@ -30,14 +30,16 @@ func TestList(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		l.PushFront(i)
 	}
-	log.Println(l.Slice())
+	log.Println(l.Slice(), l.Size())
 	elem := l.Index(0)
 	log.Println(elem)
 	l.Remove(elem)
 	log.Println(l.Slice())
 	for l.Size() > 0 {
 		l.Remove(l.First())
-		log.Println(l.Slice())
+		log.Println(l.Slice(), l.Size())
 	}
 	log.Println(l.first, l.last)
+	l.PushBack(100)
+	log.Println(l.Slice(), l.Size(), l.first, l.last)
 }
