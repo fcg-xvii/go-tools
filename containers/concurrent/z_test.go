@@ -44,7 +44,7 @@ func TestList(t *testing.T) {
 	log.Println(l.Slice(), l.Size(), l.first, l.last)
 
 	sl := make([]interface{}, 10)
-	for i, _ := range sl {
+	for i := range sl {
 		sl[i] = i * 100
 	}
 	log.Println(sl)
