@@ -25,9 +25,9 @@ func (s *Queue) Size() (size int) {
 	return
 }
 
-func (s *Queue) Push(val interface{}) {
+func (s *Queue) Push(val ...interface{}) {
 	s.m.Lock()
-	s.q.Push(val)
+	s.q.Push(val...)
 	s.m.Unlock()
 }
 
