@@ -3,7 +3,6 @@ package value
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -17,6 +16,10 @@ func ValueOf(val interface{}) Value {
 
 type Value struct {
 	val interface{}
+}
+
+func (s *Value) IsValid() bool {
+	return s.val != nil
 }
 
 func (s *Value) Setup(val interface{}) (res bool) {
@@ -33,7 +36,6 @@ func (s *Value) Setup(val interface{}) (res bool) {
 	} else {
 		rl := reflect.ValueOf(s.val)
 		if rl.Kind() == reflect.String {
-			log.Println(rl.Kind(), rr.Kind())
 			switch rr.Elem().Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				{
@@ -62,12 +64,48 @@ func (s *Value) Setup(val interface{}) (res bool) {
 				if r := recover(); r == nil {
 					rr.Elem().Set(rVal)
 					res = true
-				} else {
-					log.Println(r)
 				}
 			}()
 			rVal = rl.Convert(rr.Elem().Type())
 		}
 	}
 	return
+}
+
+func (s *Value) String() string {
+	return fmt.Sprint(s.val)
+}
+
+func (s *Value) Int() int {
+	var i int
+	s.Setup(&i)
+	return i
+}
+
+func (s *Value) Int8() int8 {
+	var i int8
+	s.Setup(&i)
+	return i
+}
+
+func (s *Value) Int16() int16 {
+	var i int16
+	s.Setup(&i)
+	return i
+}
+
+func (s *Value) Int32() int32 {
+	return int32(s.Int())
+}
+
+func (s *Value) Float32() float32 {
+	var i float32
+	s.Setup(&i)
+	return i
+}
+
+func (s *Value) Float64() float64 {
+	var i float64
+	s.Setup(&i)
+	return i
 }

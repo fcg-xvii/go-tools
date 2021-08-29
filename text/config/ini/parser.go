@@ -13,22 +13,37 @@ func init() {
 }
 
 func parser(r io.Reader) (res config.Config, err error) {
+	res = newConfig()
 	buf := bufio.NewReader(r)
 	var line []byte
-	var section *Section
+	var section config.Section
 	for {
 		line, _, err = buf.ReadLine()
 		if s := string(line); len(s) > 0 {
+			s = strings.TrimSpace(s)
 			switch s[0] {
 			case '#':
 				// comment
 			case '[':
 				// section
-				s = strings.TrimSpace(s)
-				if s[len(s)-1:] != ']'
-					break
+				if s[len(s)-1] == ']' {
+					sectionName := s[1 : len(s)-1]
+					if sectionName == "main" {
+						section, _ = res.Section("main")
+					} else {
+						section = res.AppendSection(sectionName)
+					}
+				}
 			default:
-				// value
+				// value, check comment
+				if pos := strings.Index(s, "#"); pos > 0 {
+					s = s[:pos]
+				}
+				// check plitter position
+				if pos := strings.Index(s, "="); pos > 0 {
+					key, val := strings.TrimSpace(s[:pos]), strings.TrimSpace(s[pos+1:])
+					section.SetValue(key, val)
+				}
 			}
 		}
 		if err != nil {
