@@ -8,15 +8,12 @@ import (
 )
 
 func TestINI(t *testing.T) {
-	f, err := os.Open("test.ini")
+
+	// read config
+	conf, err := config.FromFile("ini", "test.ini")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// read config
-	conf, err := config.FromReader("ini", f)
-	t.Log(conf, err)
-	f.Close()
 
 	// get value from config main section
 	mainVal, check := conf.Value("one")
@@ -40,6 +37,7 @@ func TestINI(t *testing.T) {
 	cools, check := conf.Sections("cool")
 	t.Log(cools, check)
 
+	var f *os.File
 	f, err = os.OpenFile("tmp.ini", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		t.Fatal(err)

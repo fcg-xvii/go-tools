@@ -2,10 +2,12 @@ package ami
 
 import (
 	"log"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/fcg-xvii/go-tools/text/config"
+	_ "github.com/fcg-xvii/go-tools/text/config/ini"
 )
 
 var (
@@ -15,7 +17,18 @@ var (
 func init() {
 	// setup auth vars, z_auth.config file example :
 	// 127.0.0.1:5038::admin::mypassword
-	config.SplitFileToVals("z_auth.config", "::", &host, &login, &password)
+	//config.SplitFileToVals("z_auth.config", "::", &host, &login, &password)
+
+	f, err := os.Open("z_auth.config")
+	if err == nil {
+		conf, err := config.FromReader("ini", f)
+		if err == nil {
+			conf.ValueSetup("host", &host)
+			conf.ValueSetup("login", &login)
+			conf.ValueSetup("password", &password)
+		}
+		f.Close()
+	}
 }
 
 func TestClient(t *testing.T) {
