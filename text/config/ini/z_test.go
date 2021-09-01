@@ -24,6 +24,8 @@ func TestINI(t *testing.T) {
 	i = 0
 	t.Log(conf.ValueSetup("one", &i), i)
 
+	t.Log("value default", conf.ValueDefault("one", 333))
+
 	// get section
 	main, check := conf.Section("main")
 	t.Log(main, check)

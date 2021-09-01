@@ -59,6 +59,11 @@ func (s *Config) Value(name string) (value.Value, bool) {
 	return value.Value{}, false
 }
 
+func (s *Config) ValueDefault(name string, defaultVal interface{}) interface{} {
+	s.ValueSetup(name, &defaultVal)
+	return defaultVal
+}
+
 func (s *Config) Save(w io.Writer) (err error) {
 	for name, sections := range s.sections {
 		for _, section := range sections {

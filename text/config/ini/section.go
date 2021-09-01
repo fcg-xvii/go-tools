@@ -25,6 +25,11 @@ func (s *Section) ValueSetup(name string, ptr interface{}) bool {
 	return false
 }
 
+func (s *Section) ValueDefault(name string, defaultVal interface{}) interface{} {
+	s.ValueSetup(name, &defaultVal)
+	return defaultVal
+}
+
 func (s *Section) Value(name string) (value.Value, bool) {
 	val, check := s.store[name]
 	return val, check
