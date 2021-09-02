@@ -9,11 +9,12 @@ import (
 )
 
 func newConfig() *Config {
+	mainSection := []config.Section{
+		newSection(),
+	}
 	return &Config{
 		sections: map[string][]config.Section{
-			"main": []config.Section{
-				newSection(),
-			},
+			"main": mainSection,
 		},
 	}
 }
