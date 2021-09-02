@@ -16,7 +16,7 @@ func parser(r io.Reader) (res config.Config, err error) {
 	res = newConfig()
 	buf := bufio.NewReader(r)
 	var line []byte
-	var section config.Section
+	section, _ := res.Section("main")
 	for {
 		line, _, err = buf.ReadLine()
 		if s := string(line); len(s) > 0 {
