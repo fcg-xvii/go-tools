@@ -27,7 +27,11 @@ func (s *Value) Setup(val interface{}) (res bool) {
 	if rr.Kind() != reflect.Ptr {
 		panic(fmt.Errorf("Expected ptr, given %v", rr.Type()))
 	}
-	if rr.Elem().Kind() == reflect.String {
+	rKind, rType := rr.Elem().Kind(), rr.Elem().Type()
+	if rKind == reflect.Interface {
+		rKind, rType = rr.Elem().Elem().Kind(), rr.Elem().Elem().Type()
+	}
+	if rKind == reflect.String {
 		rls := strings.TrimSpace(fmt.Sprint(s.val))
 		if len(rls) > 0 {
 			rr.Elem().Set(reflect.ValueOf(rls))
@@ -36,18 +40,25 @@ func (s *Value) Setup(val interface{}) (res bool) {
 	} else {
 		rl := reflect.ValueOf(s.val)
 		if rl.Kind() == reflect.String {
-			switch rr.Elem().Kind() {
+			switch rKind {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				{
 					if tmp, err := strconv.ParseInt(rl.String(), 10, 64); err == nil {
-						rr.Elem().Set(reflect.ValueOf(tmp).Convert(rr.Elem().Type()))
+						rr.Elem().Set(reflect.ValueOf(tmp).Convert(rType))
+						res = true
+					}
+				}
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				{
+					if tmp, err := strconv.ParseUint(rl.String(), 10, 64); err == nil {
+						rr.Elem().Set(reflect.ValueOf(tmp).Convert(rType))
 						res = true
 					}
 				}
 			case reflect.Float32, reflect.Float64:
 				{
 					if tmp, err := strconv.ParseFloat(rl.String(), 64); err == nil {
-						rr.Elem().Set(reflect.ValueOf(tmp).Convert(rr.Elem().Type()))
+						rr.Elem().Set(reflect.ValueOf(tmp).Convert(rType))
 						res = true
 					}
 				}
@@ -66,7 +77,7 @@ func (s *Value) Setup(val interface{}) (res bool) {
 					res = true
 				}
 			}()
-			rVal = rl.Convert(rr.Elem().Type())
+			rVal = rl.Convert(rType)
 		}
 	}
 	return
