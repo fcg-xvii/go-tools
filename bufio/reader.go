@@ -59,7 +59,6 @@ func (s *Reader) scanBuf(delim []byte) (res []byte, check bool) {
 }
 
 func (s *Reader) scanNeeded() bool {
-	log.Println(s.seek, s.buf.Len())
 	return s.seek < s.buf.Len()
 }
 
