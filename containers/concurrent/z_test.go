@@ -54,5 +54,11 @@ func TestList(t *testing.T) {
 	elem = l.Search(500)
 	log.Println(elem)
 	elem = l.Search(1500)
-	log.Println(elem)
+	log.Println(1500, "search", elem)
+
+	elem, added := l.PushBackIfNotExists(500)
+	log.Println(500, elem, added)
+	elem, added = l.PushBackIfNotExists(1500)
+	log.Println(1500, elem, added)
+
 }

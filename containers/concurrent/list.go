@@ -96,9 +96,25 @@ type List struct {
 	size  int
 }
 
-func (s *List) PushBack(v interface{}) *Element {
-	elem := initElem(v)
+func (s *List) PushBackIfNotExists(v interface{}) (elem *Element, added bool) {
 	s.m.Lock()
+	defer s.m.Unlock()
+	if s.search(v) == nil {
+		added = true
+		elem = s.pushBack(v)
+	}
+	return
+}
+
+func (s *List) PushBack(v interface{}) (elem *Element) {
+	s.m.Lock()
+	elem = s.pushBack(v)
+	s.m.Unlock()
+	return
+}
+
+func (s *List) pushBack(v interface{}) *Element {
+	elem := initElem(v)
 	if s.first == nil {
 		s.first, s.last = elem, elem
 	} else {
@@ -106,20 +122,34 @@ func (s *List) PushBack(v interface{}) *Element {
 		s.last = elem
 	}
 	s.size++
-	s.m.Unlock()
 	return elem
 }
 
-func (s *List) PushFront(v interface{}) *Element {
-	elem := initElem(v)
+func (s *List) PushFront(v interface{}) (elem *Element) {
 	s.m.Lock()
+	elem = s.pushFront(v)
+	s.m.Unlock()
+	return
+}
+
+func (s *List) PushFrontIfNotExists(v interface{}) (elem *Element, added bool) {
+	s.m.Lock()
+	defer s.m.Unlock()
+	if s.search(v) == nil {
+		added = true
+		elem = s.pushFront(v)
+	}
+	return
+}
+
+func (s *List) pushFront(v interface{}) *Element {
+	elem := initElem(v)
 	if s.first == nil {
 		s.first, s.last = elem, elem
 	} else {
 		s.first.setPrev(elem)
 		s.first = elem
 	}
-	s.m.Unlock()
 	s.size++
 	return elem
 }
@@ -179,6 +209,15 @@ func (s *List) Slice() []interface{} {
 		res, f = append(res, f.Val()), f.Next()
 	}
 	return res
+}
+
+func (s *List) search(val interface{}) *Element {
+	for f := s.first; f != nil; f = f.Next() {
+		if f.Val() == val {
+			return f
+		}
+	}
+	return nil
 }
 
 func (s *List) Search(val interface{}) *Element {
