@@ -183,3 +183,13 @@ func TestMap(t *testing.T) {
 	m.StorePtr("two", "Coooool")
 	log.Println(m.Int32("one", 0), m.String("two", "!"))
 }
+
+func TestMapVariable(t *testing.T) {
+	m := Map{
+		"one": int64(10),
+		"two": "okko",
+	}
+	val := 10.05
+	check := m.Variable("one", &val)
+	t.Log(check, val)
+}

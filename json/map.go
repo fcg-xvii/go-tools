@@ -233,3 +233,24 @@ func (s Map) StorePtr(key string, val interface{}) interface{} {
 	s[key] = &val
 	return &val
 }
+
+func (s Map) Variable(key string, ptr interface{}) bool {
+	val, check := s[key]
+	if !check {
+		// value is not exists
+		return false
+	}
+	vVal := reflect.ValueOf(ptr)
+	if vVal.Kind() != reflect.Ptr {
+		// ptr is not a pointer
+		return false
+	}
+	vElem := vVal.Elem()
+	rVal := reflect.ValueOf(val)
+	if !rVal.CanConvert(vElem.Type()) {
+		// type is not converted
+		return false
+	}
+	vElem.Set(rVal.Convert(vElem.Type()))
+	return true
+}
